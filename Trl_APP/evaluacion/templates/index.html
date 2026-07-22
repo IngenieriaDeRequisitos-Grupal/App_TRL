@@ -1,0 +1,40 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plataforma TRL · UTPL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<!-- Enlace a tu archivo CSS modular -->
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+<div class="web-layout">
+  <div class="tbar" id="tbar">
+    <button class="bk" id="bkBtn" onclick="goBack()" style="display:none">←</button>
+    <div class="brand-pill">UTPL</div>
+    <div class="ttl-wrap">
+      <div class="ttl" id="tbarTitle">Plataforma TRL</div>
+      <div class="ttl-sub">Portal institucional de evaluación y trazabilidad</div>
+    </div>
+    <div class="tbar-actions">
+      <div class="icon-btn" onclick="showToast('No hay notificaciones nuevas')">
+        <span>🔔</span>
+        <span class="dot"></span>
+      </div>
+      <div id="logoutBtn" class="icon-btn" onclick="logout()" title="Cerrar sesión" style="display:none;">
+        <span>🚪</span>
+      </div>
+    </div>
+  </div>
+  <div class="scr" id="mainScr"></div>
+</div>
+
+<!-- Enlace a tu archivo JS modular -->
+<script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>
