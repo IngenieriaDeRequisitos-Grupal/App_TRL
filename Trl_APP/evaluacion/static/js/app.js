@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @file Aplicación de una sola página para la evaluación de TRL.
  * @description Este archivo contiene toda la lógica de la interfaz de usuario,
  * la gestión del estado, la navegación y el renderizado de las diferentes
@@ -759,6 +759,86 @@ function closeModal() {
 }
 
 /**
+ * Renderiza la navegación de la barra lateral (desktop) y la barra inferior (móvil).
+ * @param {string} name - La pantalla actual.
+ */
+function renderNav(name) {
+  const sidebarNav = document.getElementById('sidebarNav');
+  const bottomNav = document.getElementById('bottomNav');
+  
+  if (!app.state.session.authenticated) {
+    if (sidebarNav) sidebarNav.innerHTML = '';
+    if (bottomNav) bottomNav.innerHTML = '';
+    const sidebar = document.getElementById('sidebar');
+    const bottomNavEl = document.getElementById('bottomNav');
+    if(sidebar) sidebar.style.display = 'none';
+    if(bottomNavEl) bottomNavEl.style.display = 'none';
+    return;
+  } else {
+    const sidebar = document.getElementById('sidebar');
+    const bottomNavEl = document.getElementById('bottomNav');
+    if(sidebar) sidebar.style.display = 'flex';
+    if(bottomNavEl) bottomNavEl.style.display = 'flex';
+  }
+
+  let links = [];
+  if (app.state.session.role === 'investigator') {
+    links = [
+      { id: 'inv_home', icon: '🏠', text: 'Mi Portafolio' },
+      { id: 'privacy', icon: '🛡️', text: 'Privacidad LOPDP' }
+    ];
+  } else if (app.state.session.role === 'evaluator') {
+    links = [
+      { id: 'ev_home', icon: '🧑‍⚖️', text: 'Auditorías' }
+    ];
+  } else {
+    links = [
+      { id: 'mgr_dash', icon: '📊', text: 'Panel I+D+i' },
+      { id: 'audit', icon: '🧾', text: 'Bitácora' }
+    ];
+  }
+
+  const sidebarHtml = links.map(l => `
+    <a href="#" class="nav-link ${name === l.id ? 'act' : ''}" onclick="navTo('${l.id}')" aria-current="${name === l.id ? 'page' : 'false'}">
+      <span aria-hidden="true" style="font-size: 1.25rem;">${l.icon}</span>
+      <span>${l.text}</span>
+    </a>
+  `).join('');
+
+  const bottomHtml = links.map(l => `
+    <a href="#" class="bnav-item ${name === l.id ? 'act' : ''}" onclick="navTo('${l.id}')" aria-current="${name === l.id ? 'page' : 'false'}">
+      <span class="bnav-icon" aria-hidden="true">${l.icon}</span>
+      <span class="bnav-text">${l.text}</span>
+    </a>
+  `).join('');
+
+  if (sidebarNav) sidebarNav.innerHTML = sidebarHtml;
+  if (bottomNav) bottomNav.innerHTML = bottomHtml;
+}
+
+/**
+ * Abre/cierra el sidebar en móviles
+ */
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  if (sb) {
+    sb.classList.toggle('open');
+    const isExpanded = sb.classList.contains('open');
+    document.getElementById('mobileMenuBtn').setAttribute('aria-expanded', isExpanded);
+  }
+}
+
+/**
+ * Redirige a la vista inicial según el rol
+ */
+function goHome() {
+  if (!app.state.session.authenticated) return navTo('login');
+  if (app.state.session.role === 'investigator') navTo('inv_home');
+  else if (app.state.session.role === 'evaluator') navTo('ev_home');
+  else navTo('mgr_dash');
+}
+
+/**
  * Renderiza una pantalla y actualiza la UI.
  * @private
  * @param {string} name - El nombre de la pantalla a renderizar.
@@ -772,13 +852,17 @@ function _render(name, arg) {
   const bkBtn = document.getElementById('bkBtn');
 
   // Actualizar barra de herramientas
-  tbarTitle.textContent = config.title;
-  logoutBtn.style.display = (name === 'login') ? 'none' : 'flex';
-  bkBtn.style.display = (app.state.navStack.length > 0) ? 'flex' : 'none';
+  if(tbarTitle) tbarTitle.textContent = config.title;
+  if(logoutBtn) logoutBtn.style.display = (name === 'login') ? 'none' : 'flex';
+  if(bkBtn) bkBtn.style.display = (app.state.navStack.length > 0) ? 'flex' : 'none';
+
+  renderNav(name);
 
   // Renderizar contenido principal
-  mainScr.innerHTML = config.render(arg);
-  mainScr.scrollTop = 0;
+  if(mainScr) {
+    mainScr.innerHTML = config.render(arg);
+    mainScr.scrollTop = 0;
+  }
 }
 
 /**
@@ -897,21 +981,24 @@ function openConsentModal(targetScreen) {
   ov.className = 'modal-ov';
   ov.id = 'modal';
   ov.innerHTML = `
-    <div class="modal-bx">
-      <div style="width: 44px; height: 44px; background: var(--utpl-blue-soft); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 14px;">🛡️</div>
-      <p class="modal-ttl">CONSENTIMIENTO LOPDP</p>
-      <p style="font-size: 12px; color: var(--text-dark); line-height: 1.5; margin-bottom: 16px; text-align: center;">
+    <div class="modal-bx" role="dialog" aria-labelledby="consentTitle" aria-modal="true">
+      <div style="width: 2.75rem; height: 2.75rem; background: var(--utpl-blue-soft); border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 1.375rem; margin: 0 auto 1rem;" aria-hidden="true">🛡️</div>
+      <h3 class="modal-ttl" id="consentTitle" style="text-align: center;">CONSENTIMIENTO LOPDP</h3>
+      <p class="modal-desc" style="text-align: center;">
         LA PLATAFORMA WEB ALMACENARÁ DE FORMA CIFRADA TUS DATOS DE IDENTIFICACIÓN Y EVIDENCIAS DE PROPIEDAD INTELECTUAL PARA AUDITORÍA TRL.
       </p>
-      <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 12px; font-weight: 700; color: var(--utpl-blue); margin-bottom: 20px; cursor: pointer; background: var(--bg-body); padding: 12px; border-radius: 10px; border: 1px solid var(--border);">
-        <input type="checkbox" id="consentChk" style="margin-top: 2px; width: 16px; height: 16px; accent-color: var(--utpl-blue);">
+      <label style="display: flex; align-items: flex-start; gap: 0.625rem; font-size: 0.875rem; font-weight: 700; color: var(--utpl-blue); margin-bottom: 1.5rem; cursor: pointer; background: var(--bg-body); padding: 1rem; border-radius: 0.75rem; border: 1px solid var(--border);">
+        <input type="checkbox" id="consentChk" style="margin-top: 0.125rem; width: 1.25rem; height: 1.25rem; accent-color: var(--utpl-blue);" aria-required="true">
         <span>ACEPTO EL TRATAMIENTO SEGURO DE MIS DATOS.</span>
       </label>
-      <button class="btn" onclick="acceptConsent('${targetScreen}')">✅ CONFIRMAR</button>
-      <button class="btn-out" onclick="closeModal()">❌ CANCELAR</button>
+      <div class="modal-acts">
+        <button class="btn-out" onclick="closeModal()">❌ CANCELAR</button>
+        <button class="btn" onclick="acceptConsent('${targetScreen}')">✅ CONFIRMAR</button>
+      </div>
     </div>
   `;
-  document.body.appendChild(ov);
+  document.getElementById('modalContainer').appendChild(ov);
+  document.getElementById('consentChk').focus();
 }
 
 /**
@@ -1060,15 +1147,19 @@ function openObsModal(projId, ref) {
   ov.className = 'modal-ov';
   ov.id = 'modal';
   ov.innerHTML = `
-    <div class="modal-bx">
-      <p class="modal-ttl">REGISTRAR OBSERVACIÓN</p>
-      <p style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 12px; text-align: center;">REFERENCIA: ${ref}</p>
-      <textarea class="inp" id="obsText" rows="4" placeholder="DETALLE LA CORRECCIÓN REQUERIDA EN EL SISTEMA WEB..."></textarea>
-      <button class="btn" onclick="saveObservation(${projId})">💾 GUARDAR OBSERVACIÓN</button>
-      <button class="btn-out" onclick="closeModal()">❌ CANCELAR</button>
+    <div class="modal-bx" role="dialog" aria-labelledby="obsModalTitle" aria-modal="true">
+      <h3 class="modal-ttl" id="obsModalTitle">REGISTRAR OBSERVACIÓN</h3>
+      <p style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 1rem; text-align: center;">REFERENCIA: ${ref}</p>
+      <label for="obsText" style="display: none;">Detalle de la corrección</label>
+      <textarea class="inp" id="obsText" rows="4" placeholder="DETALLE LA CORRECCIÓN REQUERIDA EN EL SISTEMA WEB..." aria-required="true"></textarea>
+      <div class="modal-acts">
+        <button class="btn-out" onclick="closeModal()" aria-label="Cancelar y cerrar modal">❌ CANCELAR</button>
+        <button class="btn" onclick="saveObservation(${projId})" aria-label="Guardar observación">💾 GUARDAR OBSERVACIÓN</button>
+      </div>
     </div>
   `;
-  document.body.appendChild(ov);
+  document.getElementById('modalContainer').appendChild(ov);
+  document.getElementById('obsText').focus();
 }
 
 /**
@@ -1076,17 +1167,48 @@ function openObsModal(projId, ref) {
  * @param {number} projId - El ID del proyecto.
  */
 function saveObservation(projId) {
+  const text = document.getElementById('obsText').value;
+  if(!text.trim()) {
+    showToast('DEBES ESCRIBIR UNA OBSERVACIÓN PARA GUARDAR');
+    document.getElementById('obsText').focus();
+    return;
+  }
   closeModal();
   showToast('OBSERVACIÓN ANOTADA EN EL EXPEDIENTE');
 }
 
 /**
- * Emite el dictamen final de una evaluación.
+ * Emite el dictamen final de una evaluación pidiendo confirmación primero.
  * @param {number} projId - El ID del proyecto.
  * @param {string} status - El nuevo estado de la solicitud.
  * @param {number} finalTrl - El nivel TRL final certificado o reclasificado.
  */
 function dictaminar(projId, status, finalTrl) {
+  var ov = document.createElement('div');
+  ov.className = 'modal-ov';
+  ov.id = 'modal';
+  ov.innerHTML = `
+    <div class="modal-bx" role="alertdialog" aria-labelledby="confirmTitle" aria-describedby="confirmDesc" aria-modal="true">
+      <h3 class="modal-ttl" id="confirmTitle" style="color: var(--danger);">⚠️ CONFIRMAR DICTAMEN</h3>
+      <p class="modal-desc" id="confirmDesc">
+        ESTÁ A PUNTO DE EMITIR EL DICTAMEN <strong>${status.toUpperCase().replace('_', ' ')}</strong>.<br>
+        ESTA ACCIÓN NO SE PUEDE DESHACER Y QUEDARÁ REGISTRADA EN LA BITÁCORA ISO 27001.
+      </p>
+      <div class="modal-acts">
+        <button class="btn-out" onclick="closeModal()">CANCELAR</button>
+        <button class="btn" onclick="executeDictaminar(${projId}, '${status}', ${finalTrl})" style="background: var(--danger);">CONFIRMAR Y EMITIR</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('modalContainer').appendChild(ov);
+}
+
+/**
+ * Ejecuta el dictamen final.
+ * @private
+ */
+function executeDictaminar(projId, status, finalTrl) {
+  closeModal();
   const proj = app.data.PROJECTS.find(x => x.id === projId);
   if (proj) {
     const sol = proj.solicitudes[proj.solicitudes.length - 1];
