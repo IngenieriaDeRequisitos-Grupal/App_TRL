@@ -1,0 +1,16 @@
+export enum MicroserviceToken {
+  USERS = 'USERS_SERVICE',
+  REQUESTS = 'REQUESTS_SERVICE',
+  TELEMETRY = 'TELEMETRY_SERVICE',
+  CLINICAL = 'CLINICAL_SERVICE',
+  INTEGRATION = 'INTEGRATION_SERVICE',
+  FINANCE = 'FINANCE_SERVICE',
+}
+
+export const RABBITMQ_TELEMETRY_EVENTS_QUEUE =
+  process.env.RABBITMQ_TELEMETRY_QUEUE || 'telemetry_events_queue';
+
+export const TELEMETRY_EVENT_PATTERNS = {
+  LECTURA_CREADA: 'lectura.creada',
+  ALERTA_GENERADA: 'alerta.generada',
+};

@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+build/
+
+# env
+.env
+.env.*.local
+.env.local
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# tests / coverage
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# TypeORM / misc
+*.tsbuildinfo

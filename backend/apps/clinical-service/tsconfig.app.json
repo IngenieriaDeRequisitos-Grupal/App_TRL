@@ -1,0 +1,8 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/apps/clinical-service",
+    "tsBuildInfoFile": "../../dist/apps/clinical-service/tsconfig.app.tsbuildinfo"
+  },
+  "include": ["src/**/*"]
+}
