@@ -13,6 +13,7 @@ import { RolesGuard } from './common/security/roles.guard';
 import { SecurityModule } from './common/security/security.module';
 import { validateEnvironment } from './config/configuration';
 import { TRL_ENTITIES } from './database/entities/trl.entities';
+import { InitialTrlPostgres1722211200000 } from './database/migrations/1722211200000-InitialTrlPostgres';
 import { AuditInterceptor } from './modules/audit/audit.interceptor';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -35,7 +36,7 @@ import { UsersModule } from './modules/users/users.module';
         url: config.getOrThrow<string>('DATABASE_URL'),
         ssl: String(config.get('DB_SSL')).toLowerCase() === 'true' ? { rejectUnauthorized: true } : false,
         entities: [...TRL_ENTITIES],
-        migrations: [`${__dirname}/database/migrations/*.{js,ts}`],
+        migrations: [InitialTrlPostgres1722211200000],
         migrationsRun: true,
         synchronize: false,
         logging: false,

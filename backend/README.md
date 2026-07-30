@@ -7,9 +7,13 @@ API NestJS/TypeORM para la evaluación de madurez tecnológica. La única persis
 1. Copiar `.env.example` a `.env` y reemplazar todos los secretos.
 2. Definir contraseñas distintas en `POSTGRES_ADMIN_PASSWORD` y `POSTGRES_APP_PASSWORD`.
 3. Ejecutar `docker compose up --build`.
-4. Ejecutar una sola vez `docker compose exec api npm run seed` con las variables `SEED_ADMIN_*` definidas, y retirarlas después.
+4. Ejecutar una sola vez `docker compose exec -e SEED_ADMIN_NAME=... -e SEED_ADMIN_CEDULA=... -e SEED_ADMIN_EMAIL=... -e SEED_ADMIN_PASSWORD=... api npm run seed`, guardar el secreto MFA mostrado y retirar esas variables después.
 
 Las migraciones se aplican al iniciar. `synchronize` está deshabilitado.
+
+En desarrollo puede habilitarse `MFA_CONSOLE_OUTPUT=true`. Después de un login válido, la consola de la API muestra un código TOTP de 6 dígitos que cambia cada 30 segundos. La aplicación impide esta salida cuando `NODE_ENV=production`.
+
+Si se cambia `POSTGRES_APP_PASSWORD` después de crear el volumen, ejecutar `powershell -ExecutionPolicy Bypass -File .\scripts\sync-db-password.ps1`. El script actualiza el rol sin eliminar datos y recrea la API.
 
 ## Contrato de configuración TRL
 
