@@ -1,0 +1,45 @@
+export enum NombreRol {
+  ADMINISTRADOR = 'ADMINISTRADOR',
+  INVESTIGADOR = 'INVESTIGADOR',
+  EVALUADOR = 'EVALUADOR',
+  GESTOR_IDI = 'GESTOR_IDI',
+}
+
+export enum EstadoUsuario {
+  ACTIVO = 'ACTIVO',
+  SUSPENDIDO = 'SUSPENDIDO',
+  BLOQUEADO = 'BLOQUEADO',
+}
+
+export enum EstadoSolicitud {
+  BORRADOR = 'BORRADOR',
+  ENVIADA = 'ENVIADA',
+  ASIGNADA = 'ASIGNADA',
+  EN_EVALUACION = 'EN_EVALUACION',
+  OBSERVADA = 'OBSERVADA',
+  EVALUADA = 'EVALUADA',
+}
+
+export enum EstadoProgreso {
+  NO_INICIADO = 'NO_INICIADO',
+  EN_PROGRESO = 'EN_PROGRESO',
+  COMPLETADO = 'COMPLETADO',
+}
+
+export enum EstadoObservacion {
+  PENDIENTE = 'PENDIENTE',
+  CORREGIDA = 'CORREGIDA',
+  CERRADA = 'CERRADA',
+}
+
+export enum TipoConsentimiento {
+  TERMINOS_USO = 'TERMINOS_USO',
+  AVISO_PRIVACIDAD = 'AVISO_PRIVACIDAD',
+  FINALIDAD_OPCIONAL = 'FINALIDAD_OPCIONAL',
+}
+
+export enum DecisionConsentimiento {
+  ACEPTADO = 'ACEPTADO',
+  RECHAZADO = 'RECHAZADO',
+  RETIRADO = 'RETIRADO',
+}

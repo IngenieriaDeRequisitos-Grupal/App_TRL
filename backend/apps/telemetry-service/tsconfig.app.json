@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../dist/apps/telemetry-service",
-    "tsBuildInfoFile": "../../dist/apps/telemetry-service/tsconfig.app.tsbuildinfo"
-  },
-  "include": ["src/**/*"]
-}

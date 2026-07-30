@@ -1,141 +1,45 @@
-version: "3.9"
-
-x-common-env: &common-env
-  NODE_ENV: ${NODE_ENV:-production}
-  JWT_SECRET: ${JWT_SECRET}
-  JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
-  ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-  DB_HOST: postgres
-  DB_PORT: 5432
-  DB_USERNAME: ${DB_USERNAME:-medapp}
-  DB_PASSWORD: ${DB_PASSWORD:-medapp_secret}
-  RABBITMQ_URL: amqp://${DB_USERNAME:-medapp}:${DB_PASSWORD:-medapp_secret}@rabbitmq:5672
-  RABBITMQ_TELEMETRY_QUEUE: ${RABBITMQ_TELEMETRY_QUEUE:-telemetry_events_queue}
-  USERS_SERVICE_HOST: users-service
-  USERS_SERVICE_PORT: 3001
-  REQUESTS_SERVICE_HOST: requests-service
-  REQUESTS_SERVICE_PORT: 3002
-  TELEMETRY_SERVICE_HOST: telemetry-service
-  TELEMETRY_SERVICE_PORT: 3003
-  CLINICAL_SERVICE_HOST: clinical-service
-  CLINICAL_SERVICE_PORT: 3004
-  INTEGRATION_SERVICE_HOST: integration-service
-  INTEGRATION_SERVICE_PORT: 3005
-  FINANCE_SERVICE_HOST: finance-service
-  FINANCE_SERVICE_PORT: 3006
-
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: ${DB_USERNAME:-medapp}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-medapp_secret}
-      POSTGRES_DB: postgres
-      POSTGRES_MULTIPLE_DATABASES: "users_db,requests_db,telemetry_db,clinical_db,integration_db,finance_db"
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: trl_db
+      POSTGRES_USER: trl_owner
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?POSTGRES_ADMIN_PASSWORD is required}
+      POSTGRES_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?POSTGRES_APP_PASSWORD is required}
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./docker/postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh
+      - trl_pgdata:/var/lib/postgresql/data
+      - ./docker/init-app-role.sh:/docker-entrypoint-initdb.d/10-init-app-role.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-medapp}"]
+      test: ["CMD-SHELL", "pg_isready -U trl_owner -d trl_db"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks: [trl_internal]
 
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
+  api:
+    build: .
     restart: unless-stopped
+    env_file: ${ENV_FILE:-.env}
     environment:
-      RABBITMQ_DEFAULT_USER: ${DB_USERNAME:-medapp}
-      RABBITMQ_DEFAULT_PASS: ${DB_PASSWORD:-medapp_secret}
+      DATABASE_URL: postgresql://trl_app:${POSTGRES_APP_PASSWORD}@postgres:5432/trl_db
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
-      - "5672:5672"
-      - "15672:15672"
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
+      - "127.0.0.1:3000:3000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks: [trl_internal]
 
-  users-service:
-    build: { context: ., dockerfile: Dockerfile, args: { APP_NAME: users-service } }
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      DB_NAME: ${USERS_DB_NAME:-users_db}
-    depends_on:
-      postgres: { condition: service_healthy }
-    expose: ["3001"]
-
-  requests-service:
-    build: { context: ., dockerfile: Dockerfile, args: { APP_NAME: requests-service } }
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      DB_NAME: ${REQUESTS_DB_NAME:-requests_db}
-    depends_on:
-      postgres: { condition: service_healthy }
-    expose: ["3002"]
-
-  telemetry-service:
-    build: { context: ., dockerfile: Dockerfile, args: { APP_NAME: telemetry-service } }
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      DB_NAME: ${TELEMETRY_DB_NAME:-telemetry_db}
-    depends_on:
-      postgres: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
-    expose: ["3003"]
-
-  clinical-service:
-    build: { context: ., dockerfile: Dockerfile, args: { APP_NAME: clinical-service } }
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      DB_NAME: ${CLINICAL_DB_NAME:-clinical_db}
-    depends_on:
-      postgres: { condition: service_healthy }
-    expose: ["3004"]
-
-  integration-service:
-    build: { context: ., dockerfile: Dockerfile, args: { APP_NAME: integration-service } }
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      DB_NAME: ${INTEGRATION_DB_NAME:-integration_db}
-    depends_on:
-      postgres: { condition: service_healthy }
-      rabbitmq: { condition: service_healthy }
-    expose: ["3005"]
-
-  finance-service:
-    build: { context: ., dockerfile: Dockerfile, args: { APP_NAME: finance-service } }
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      DB_NAME: ${FINANCE_DB_NAME:-finance_db}
-    depends_on:
-      postgres: { condition: service_healthy }
-    expose: ["3006"]
-
-  gateway:
-    build: { context: ., dockerfile: Dockerfile, args: { APP_NAME: gateway } }
-    restart: unless-stopped
-    environment:
-      <<: *common-env
-      GATEWAY_PORT: 3000
-    ports:
-      - "3000:3000"
-    depends_on:
-      - users-service
-      - requests-service
-      - telemetry-service
-      - clinical-service
-      - integration-service
-      - finance-service
+networks:
+  trl_internal:
+    internal: true
 
 volumes:
-  pgdata:
+  trl_pgdata:

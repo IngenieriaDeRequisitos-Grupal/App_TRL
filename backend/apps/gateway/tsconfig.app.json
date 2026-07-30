@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "../../dist/apps/gateway",
-    "tsBuildInfoFile": "../../dist/apps/gateway/tsconfig.app.tsbuildinfo"
-  },
-  "include": ["src/**/*"]
-}
