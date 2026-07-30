@@ -1,17 +1,70 @@
 {% extends 'master.html' %}
 {% block title %}Cuestionario TRL{% endblock %}
 {% block contenido %}
-<section class="card narrow-card">
-  <div class="page-title">
-    <span class="role-chip">Evaluación</span>
-    <h1>Cuestionario TRL</h1>
-    <p class="page-subtitle">Marque únicamente los criterios que pueda demostrar con evidencia.</p>
-  </div>
-  {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
-  <form method="post">
-    {% csrf_token %}
-    {% for field in form %}<label class="checkbox-row">{{ field }} {{ field.label }}</label>{% endfor %}
-    <div class="button-row"><button type="submit" class="btn btn-primary">Guardar respuestas</button><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Cancelar</a></div>
-  </form>
-</section>
+<div class="page-header"><div class="page-title"><span class="role-chip">Investigador</span><h1>Evaluar nivel TRL</h1><p class="page-subtitle">Seleccione el nivel objetivo. Se mostrarán los requisitos acumulados desde TRL 1 hasta el nivel elegido.</p></div><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Volver</a></div>
+{% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
+<form method="post" enctype="multipart/form-data" id="trl-evaluation-form" novalidate>{% csrf_token %}
+  <section class="card target-level-card">
+    <div class="form-group">{{ form.nivel_objetivo.label_tag }}{{ form.nivel_objetivo }}{{ form.nivel_objetivo.errors }}</div>
+    <div id="trl-description" class="trl-description"></div>
+    <div class="step-bar" aria-hidden="true">{% for group in question_groups %}<span class="step-seg" data-step="{{ group.level }}"></span>{% endfor %}</div>
+  </section>
+
+  <section id="trl-questionnaire" class="stack-list">
+  {% for group in question_groups %}
+    <details class="trl-level card" data-level="{{ group.level }}" data-description="{{ group.description }}">
+      <summary><span class="trl-level-number">{{ group.level }}</span><span><strong>TRL {{ group.level }}</strong><small>{{ group.description }}</small></span><span class="trl-level-count">{{ group.questions|length }} criterios</span></summary>
+      <div class="trl-level-body">
+      {% for question in group.questions %}
+        <article class="criterion-card">
+          <h3>{{ forloop.counter }}. {{ question.field.label }}</h3>
+          <p class="criterion-hint">{{ question.hint }}</p>
+          <div class="criterion-options">{{ question.field }}</div>
+          {{ question.field.errors }}
+        </article>
+      {% endfor %}
+      </div>
+    </details>
+  {% endfor %}
+  </section>
+
+  <section class="card upload-card">
+    <h2>Evidencia documental</h2>
+    {% if existing_documents %}<div class="alert alert-success">Ya existe evidencia guardada. Puede adjuntar otro PDF actualizado o continuar sin reemplazarla.</div>{% endif %}
+    <label class="upload-zone" for="{{ form.evidencia_pdf.id_for_label }}"><span class="upload-icon">↑</span><strong>Seleccionar documento PDF</strong><span>Un archivo de hasta 10 MB. Se cifrará antes de guardarse en PostgreSQL.</span>{{ form.evidencia_pdf }}</label>
+    <p id="selected-file" class="selected-file" aria-live="polite"></p>
+    {{ form.evidencia_pdf.errors }}
+  </section>
+
+  <div class="button-row"><button type="submit" class="btn btn-primary">Guardar cuestionario y evidencia</button><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Cancelar</a></div>
+</form>
+
+<script>
+(() => {
+  const selector = document.querySelector('[data-trl-selector]');
+  const levels = [...document.querySelectorAll('.trl-level')];
+  const steps = [...document.querySelectorAll('[data-step]')];
+  const description = document.getElementById('trl-description');
+  const fileInput = document.getElementById('{{ form.evidencia_pdf.id_for_label }}');
+  const selectedFile = document.getElementById('selected-file');
+
+  function updateQuestionnaire() {
+    const target = Number(selector.value || 1);
+    levels.forEach((element) => {
+      const level = Number(element.dataset.level);
+      element.hidden = level > target;
+      if (level === target) element.open = true;
+    });
+    steps.forEach((element) => element.classList.toggle('done', Number(element.dataset.step) <= target));
+    const targetElement = levels.find((element) => Number(element.dataset.level) === target);
+    description.textContent = targetElement ? `TRL ${target} — ${targetElement.dataset.description}` : '';
+  }
+
+  selector.addEventListener('change', updateQuestionnaire);
+  fileInput.addEventListener('change', () => {
+    selectedFile.textContent = fileInput.files.length ? `Archivo seleccionado: ${fileInput.files[0].name}` : '';
+  });
+  updateQuestionnaire();
+})();
+</script>
 {% endblock %}

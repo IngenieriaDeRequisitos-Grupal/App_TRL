@@ -107,6 +107,25 @@ Compruebe e inicie Django:
 
 Abra <http://127.0.0.1:8000/>. No abra el frontend directamente como archivo HTML: debe entrar por el servidor Django.
 
+## Preparar los cuatro roles
+
+Cada instalación de PostgreSQL es independiente. Las cuentas creadas en una computadora no aparecen automáticamente en la de otro integrante.
+
+1. Inicie sesión con el administrador creado mediante `npm run seed`.
+2. Abra `http://127.0.0.1:8000/admin/crear-usuario/`.
+3. Cree al menos un `INVESTIGADOR`, un `EVALUADOR` y un `GESTOR_IDI`.
+4. Guarde el secreto MFA mostrado una sola vez para cada cuenta.
+5. Entre como gestor y abra `Configuración TRL`; active una matriz antes de que el investigador cree su primera solicitud.
+
+Las funciones visibles por rol son:
+
+- `ADMINISTRADOR`: usuarios, estados de acceso, asignación de evaluadores y auditoría.
+- `INVESTIGADOR`: proyectos, cuestionario, evidencias, envío y corrección de observaciones.
+- `EVALUADOR`: solicitudes asignadas, evidencias, observaciones y calificación final.
+- `GESTOR_IDI`: asignaciones, dashboard, configuración TRL, reportes PDF y auditoría.
+
+En desarrollo, si `MFA_CONSOLE_OUTPUT=true`, cualquier usuario puede copiar su código temporal desde `docker compose logs -f api` después de introducir correctamente correo y contraseña.
+
 ## Arranque diario
 
 Terminal 1, backend:

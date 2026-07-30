@@ -2,28 +2,20 @@
 {% block title %}Proyectos | TRL UTPL{% endblock %}
 {% block contenido %}
 <div class="page-header">
-  <div class="page-title">
-    <span class="role-chip">{% if request.session.user.rol == 'INVESTIGADOR' or request.session.user.role == 'INVESTIGADOR' %}Investigador{% elif request.session.user.rol == 'GESTOR_IDI' or request.session.user.role == 'GESTOR_IDI' %}Gestor IDI{% elif request.session.user.rol == 'ADMINISTRADOR' or request.session.user.role == 'ADMINISTRADOR' %}Administrador{% else %}Usuario{% endif %}</span>
-    <h1>Portafolio de invenciones</h1>
-    <p class="page-subtitle">Visualice, evalúe y gestione los proyectos disponibles según el acceso de su rol.</p>
-  </div>
-  {% if request.session.user.rol == 'INVESTIGADOR' or request.session.user.role == 'INVESTIGADOR' %}<a href="{% url 'crear_proyecto' %}" class="btn btn-primary">+ Registrar proyecto</a>{% endif %}
+  <div class="page-title"><span class="role-chip">{{ request.session.user.rol }}</span><h1>Portafolio de invenciones</h1><p class="page-subtitle">Proyectos visibles de acuerdo con el rol autenticado.</p></div>
+  {% if request.session.user.rol == 'INVESTIGADOR' %}<a href="{% url 'crear_proyecto' %}" class="btn btn-primary">+ Registrar proyecto</a>{% endif %}
 </div>
 {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
 <section class="grid-cards">
-  {% for proyecto in proyectos %}
-    <article class="card">
-      <h2>{{ proyecto.titulo_tecnologia }}</h2>
-      <p class="text-muted">{{ proyecto.rama_innovacion }}</p>
-      <p><strong>Nivel actual:</strong> {% if proyecto.nivel_trl_actual %}TRL {{ proyecto.nivel_trl_actual }}{% else %}Sin evaluar{% endif %}</p>
-      {% if proyecto.evaluacion %}<p><span class="badge badge-warning">{{ proyecto.evaluacion.estado }}</span></p>{% endif %}
-      <div class="button-row">
-        {% if request.session.user.rol == 'INVESTIGADOR' %}<a href="{% url 'evaluar_trl' proyecto.id_proyecto %}" class="btn btn-primary">Cuestionario</a>{% endif %}
-        {% if request.session.user.rol != 'ADMINISTRADOR' %}<a href="{% url 'tabla_evidencias' proyecto.id_proyecto %}" class="btn btn-secondary">Evidencias</a>{% endif %}
-      </div>
-    </article>
-  {% empty %}
-    <article class="card empty-state"><p>No existen proyectos para mostrar en este momento.</p></article>
-  {% endfor %}
+{% for proyecto in proyectos %}
+  <article class="card"><h2>{{ proyecto.titulo_tecnologia }}</h2><p class="text-muted">{{ proyecto.rama_innovacion }}</p><p><strong>Nivel actual:</strong> {% if proyecto.nivel_trl_actual %}TRL {{ proyecto.nivel_trl_actual }}{% else %}Sin evaluar{% endif %}</p>
+    {% if proyecto.evaluacion %}<p><span class="badge badge-warning">{{ proyecto.evaluacion.estado }}</span> {% if proyecto.evaluacion.nivel_estimado != None %}Estimado: TRL {{ proyecto.evaluacion.nivel_estimado }}{% endif %}</p>{% endif %}
+    <div class="button-row">
+      {% if request.session.user.rol == 'INVESTIGADOR' %}{% if not proyecto.evaluacion or proyecto.evaluacion.estado == 'BORRADOR' or proyecto.evaluacion.estado == 'OBSERVADA' %}<a href="{% url 'evaluar_trl' proyecto.id_proyecto %}" class="btn btn-primary">Cuestionario</a>{% endif %}{% endif %}
+      {% if request.session.user.rol != 'ADMINISTRADOR' and proyecto.evaluacion %}<a href="{% url 'tabla_evidencias' proyecto.id_proyecto %}" class="btn btn-secondary">Evidencias</a>{% endif %}
+      {% if proyecto.evaluacion %}<a href="{% url 'solicitudes' %}" class="btn btn-secondary">Gestionar solicitud</a>{% endif %}
+    </div>
+  </article>
+{% empty %}<article class="card empty-state"><p>No existen proyectos disponibles para este rol.</p></article>{% endfor %}
 </section>
 {% endblock %}

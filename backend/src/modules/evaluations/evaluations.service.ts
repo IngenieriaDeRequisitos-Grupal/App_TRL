@@ -66,6 +66,8 @@ export class EvaluationsService {
       .leftJoinAndSelect('s.evaluador', 'e')
       .leftJoinAndSelect('s.cuestionario', 'q')
       .leftJoinAndSelect('s.nivel', 'n')
+      .leftJoinAndSelect('s.observaciones', 'o')
+      .leftJoinAndSelect('s.calificacion', 'c')
       .orderBy('s.fecha_envio', 'DESC');
     if (user.rol === NombreRol.INVESTIGADOR) {
       builder.where('i.id_usuario = :userId', { userId: user.id_usuario });
@@ -84,7 +86,24 @@ export class EvaluationsService {
       },
       id_evaluador: request.evaluador?.id_usuario ?? null,
       id_cuestionario: request.cuestionario?.id_cuestionario ?? null,
+      respuestas: request.cuestionario?.respuestas_json ?? {},
       nivel_estimado: request.nivel?.valor_estimado ?? null,
+      observaciones: (request.observaciones ?? [])
+        .sort((left, right) => right.fecha_creacion.getTime() - left.fecha_creacion.getTime())
+        .map((observation) => ({
+          id_observacion: observation.id_observacion,
+          descripcion_problema: observation.descripcion_problema,
+          fecha_creacion: observation.fecha_creacion,
+          estado: observation.estado,
+        })),
+      calificacion: request.calificacion
+        ? {
+          id_calificacion: request.calificacion.id_calificacion,
+          dictamen_auditoria: request.calificacion.dictamen_auditoria,
+          nivel_aprobado: request.calificacion.nivel_aprobado,
+          fecha_calificacion: request.calificacion.fecha_calificacion,
+        }
+        : null,
     }));
   }
 

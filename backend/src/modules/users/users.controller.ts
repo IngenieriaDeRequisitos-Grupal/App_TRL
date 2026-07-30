@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { NombreRol } from '../../common/domain.enums';
-import { Roles } from '../../common/security/security.decorators';
+import { CurrentUser, RequestPrincipal, Roles } from '../../common/security/security.decorators';
 import { CreateUsuarioDto, ListQueryDto, UpdateUsuarioAccessDto } from './users.dto';
 import { UsersService } from './users.service';
 
@@ -15,8 +15,9 @@ export class UsersController {
   }
 
   @Get()
-  list(@Query() query: ListQueryDto) {
-    return this.users.list(query);
+  @Roles(NombreRol.ADMINISTRADOR, NombreRol.GESTOR_IDI)
+  list(@CurrentUser() user: RequestPrincipal, @Query() query: ListQueryDto) {
+    return this.users.list(user, query);
   }
 
   @Patch(':id/access')

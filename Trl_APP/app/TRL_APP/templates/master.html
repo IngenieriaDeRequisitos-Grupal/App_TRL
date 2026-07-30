@@ -11,27 +11,36 @@
   <header class="navbar">
     <div class="navbar-container">
       <div class="navbar-brand-group">
-        <a href="{% url 'listado_proyectos' %}" class="navbar-brand">TRL Assessment</a>
-        <span class="role-chip">{% if request.session.user.role == 'ADMINISTRADOR' or request.session.user.rol == 'ADMINISTRADOR' %}Administrador{% elif request.session.user.role == 'GESTOR_IDI' or request.session.user.rol == 'GESTOR_IDI' %}Gestor IDI{% elif request.session.user.role == 'INVESTIGADOR' or request.session.user.rol == 'INVESTIGADOR' %}Investigador{% else %}Usuario{% endif %}</span>
+        <a href="{% url 'listado_proyectos' %}" class="navbar-brand" aria-label="Ir al inicio de Plataforma TRL">
+          <img src="{% static 'img/trl-utpl-logo.png' %}" alt="" class="navbar-logo">
+          <span class="navbar-brand-copy"><strong>Plataforma TRL</strong><small>UTPL · Inteligencia I+D+i</small></span>
+        </a>
+        <span class="role-chip">{{ request.session.user.rol }}</span>
       </div>
-      <nav class="navbar-nav">
+      <nav class="navbar-nav" aria-label="Navegación principal">
         <a href="{% url 'listado_proyectos' %}" class="nav-link">Proyectos</a>
-        {% if request.session.user.role == 'ADMINISTRADOR' or request.session.user.rol == 'ADMINISTRADOR' %}
+        <a href="{% url 'solicitudes' %}" class="nav-link">Solicitudes</a>
+        {% if request.session.user.rol == 'ADMINISTRADOR' %}
+          <a href="{% url 'usuarios' %}" class="nav-link">Usuarios</a>
           <a href="{% url 'create_user' %}" class="nav-link">Crear usuario</a>
           <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
-        {% elif request.session.user.role == 'GESTOR_IDI' or request.session.user.rol == 'GESTOR_IDI' %}
+        {% elif request.session.user.rol == 'GESTOR_IDI' %}
+          <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
           <a href="{% url 'configuracion_trl' %}" class="nav-link">Configuración TRL</a>
           <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
         {% endif %}
         <div class="nav-user">
-          <span class="nav-user-name">{{ request.session.user.email|default:'Usuario' }}</span>
-          <span class="nav-user-role">{{ request.session.user.role|default:request.session.user.rol|default:'Usuario' }}</span>
+          <span class="nav-user-name">{{ request.session.user.correo_electronico }}</span>
+          <span class="nav-user-role">{{ request.session.user.rol }}</span>
         </div>
-        <a href="{% url 'logout' %}" class="btn btn-warning">Salir</a>
+        <a href="{% url 'logout' %}" class="btn btn-warning nav-logout">Cerrar sesión</a>
       </nav>
     </div>
   </header>
   <main class="container">
+    {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-danger{% else %}alert-success{% endif %}">{{ message }}</div>
+    {% endfor %}
     {% block contenido %}{% endblock %}
   </main>
 </body>

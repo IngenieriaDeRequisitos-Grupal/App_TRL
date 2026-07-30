@@ -11,21 +11,15 @@
   <main class="login-wrapper">
     <section class="card login-card">
       <div class="brand">
-        <div class="brand-badge">MFA</div>
-        <div>
-          <p class="eyebrow">Autenticación</p>
-          <h1>Verificación MFA</h1>
-        </div>
+        <img src="{% static 'img/trl-utpl-logo.png' %}" alt="Logotipo TRL UTPL" class="brand-logo">
+        <div><p class="eyebrow">Autenticación</p><h1>Verificación MFA</h1></div>
       </div>
-      <p class="text-muted">Ingrese el código temporal de seis dígitos para confirmar tu identidad.</p>
+      <p class="text-muted">Ingrese el código temporal de seis dígitos para confirmar su identidad.</p>
       {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
       <form method="post" novalidate>
         {% csrf_token %}
-        <div class="form-group mb-3">
-          {{ form.codigo.label_tag }}
-          {{ form.codigo }}
-        </div>
-        <button type="submit" class="btn btn-primary full-width">Verificar</button>
+        <div class="form-group mb-3">{{ form.codigo.label_tag }}{{ form.codigo }}</div>
+        <button type="submit" class="btn btn-primary full-width">Verificar identidad <span aria-hidden="true">→</span></button>
       </form>
     </section>
   </main>

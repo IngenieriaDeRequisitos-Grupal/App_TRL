@@ -1,0 +1,11 @@
+{% extends 'master.html' %}
+{% block title %}Dashboard | TRL UTPL{% endblock %}
+{% block contenido %}
+<div class="page-header"><div class="page-title"><span class="role-chip">Gestor IDI</span><h1>Dashboard institucional</h1><p class="page-subtitle">Resumen de solicitudes y generación de reportes TRL.</p></div></div>
+{% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
+<section class="stats-grid">
+{% for estado,total in dashboard.estadisticas_globales.items %}<article class="card stat-card"><span>{{ estado }}</span><strong>{{ total }}</strong></article>{% empty %}<article class="card empty-state">Todavía no existen proyectos para calcular estadísticas.</article>{% endfor %}
+</section>
+<section class="card form-section"><h2>Generar reporte PDF</h2><form method="post">{% csrf_token %}{{ form.project_ids.errors }}<div class="checkbox-list">{{ form.project_ids }}</div><button class="btn btn-primary" type="submit">Generar reporte</button></form>
+{% if generated_report %}<div class="alert alert-success"><span>Reporte {{ generated_report.numero_reporte }} listo.</span><a class="btn btn-secondary" href="{% url 'descargar_reporte' generated_report.numero_reporte %}">Descargar PDF</a></div>{% endif %}</section>
+{% endblock %}

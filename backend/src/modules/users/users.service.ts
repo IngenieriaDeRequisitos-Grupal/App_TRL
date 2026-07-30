@@ -6,6 +6,7 @@ import { authenticator } from 'otplib';
 import { DataSource, Repository } from 'typeorm';
 import { EstadoUsuario, NombreRol } from '../../common/domain.enums';
 import { CryptoService } from '../../common/security/crypto.service';
+import { RequestPrincipal } from '../../common/security/security.decorators';
 import {
   Administrador,
   Evaluador,
@@ -90,9 +91,12 @@ export class UsersService {
     };
   }
 
-  async list(query: ListQueryDto): Promise<{ data: SafeUsuario[]; total: number; page: number; limit: number }> {
+  async list(user: RequestPrincipal, query: ListQueryDto): Promise<{ data: SafeUsuario[]; total: number; page: number; limit: number }> {
     const [users, total] = await this.users.findAndCount({
       relations: { rol: true },
+      ...(user.rol === NombreRol.GESTOR_IDI
+        ? { where: { rol: { nombre_rol: NombreRol.EVALUADOR } } }
+        : {}),
       order: { fecha_creacion: 'DESC' },
       skip: (query.page - 1) * query.limit,
       take: query.limit,
@@ -103,6 +107,7 @@ export class UsersService {
   async updateAccess(id: string, dto: UpdateUsuarioAccessDto): Promise<SafeUsuario> {
     const user = await this.users.findOne({ where: { id_usuario: id }, relations: { rol: true } });
     if (!user) throw new NotFoundException('Usuario no encontrado');
+    // WARNING: cambiar el rol de una cuenta existente puede desalinear el discriminador de herencia; la interfaz solo permite cambiar el estado hasta migrar ese flujo de forma transaccional.
     if (dto.rol && dto.rol !== user.rol.nombre_rol) {
       const role = await this.roles.findOne({ where: { nombre_rol: dto.rol } });
       if (!role) throw new ConflictException('Rol no configurado');

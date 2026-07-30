@@ -1,19 +1,21 @@
 {% extends 'master.html' %}
 {% block title %}Evidencias | TRL UTPL{% endblock %}
 {% block contenido %}
-<div class="page-header"><div class="page-title"><span class="role-chip">Investigador</span><h1>Evidencias</h1><p class="page-subtitle">Documentos PDF cifrados en PostgreSQL y organizados por proyecto.</p></div><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Volver</a></div>
+<div class="page-header"><div class="page-title"><span class="role-chip">{{ request.session.user.rol }}</span><h1>Evidencias</h1><p class="page-subtitle">Documentos PDF cifrados en PostgreSQL y organizados por proyecto.</p></div><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Volver</a></div>
 {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
-{% if request.session.user.rol == 'INVESTIGADOR' and evaluacion %}
+{% if evaluacion %}<p><span class="badge badge-warning">{{ evaluacion.estado }}</span></p>{% endif %}
+{% if request.session.user.rol == 'INVESTIGADOR' and evaluacion.estado == 'ENVIADA' %}<div class="alert alert-success">El PDF está guardado. La solicitud espera que un gestor o administrador asigne un evaluador.</div>{% endif %}
+{% if request.session.user.rol == 'INVESTIGADOR' and evaluacion %}{% if evaluacion.estado == 'BORRADOR' or evaluacion.estado == 'OBSERVADA' %}
 <section class="card form-section">
   <form method="post" enctype="multipart/form-data" class="button-row">
     {% csrf_token %}<input type="hidden" name="action" value="upload"><input type="file" name="file" accept="application/pdf" required><button class="btn btn-primary" type="submit">Subir PDF</button>
   </form>
 </section>
-{% endif %}
+{% endif %}{% endif %}
 <div class="table-responsive"><table class="table"><thead><tr><th>Archivo</th><th>Fecha</th><th>Tamaño</th><th>Acción</th></tr></thead><tbody>
 {% for documento in documentos %}<tr><td>{{ documento.nombre_archivo }}</td><td>{{ documento.fecha_carga }}</td><td>{{ documento.tamano_bytes }} bytes</td><td><a class="btn btn-secondary" href="{% url 'descargar_evidencia' documento.id_documento %}">Descargar</a></td></tr>{% empty %}<tr><td colspan="4">No existen evidencias.</td></tr>{% endfor %}
 </tbody></table></div>
-{% if request.session.user.rol == 'INVESTIGADOR' and evaluacion and documentos %}
+{% if request.session.user.rol == 'INVESTIGADOR' and evaluacion and documentos %}{% if evaluacion.estado == 'BORRADOR' or evaluacion.estado == 'OBSERVADA' %}
 <form method="post" class="form-section">{% csrf_token %}<input type="hidden" name="action" value="submit"><button class="btn btn-warning" type="submit">Enviar solicitud a evaluación</button></form>
-{% endif %}
+{% endif %}{% endif %}
 {% endblock %}

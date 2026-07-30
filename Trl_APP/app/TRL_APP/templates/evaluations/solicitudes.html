@@ -1,0 +1,56 @@
+{% extends 'master.html' %}
+{% block title %}Solicitudes | TRL UTPL{% endblock %}
+{% block contenido %}
+<div class="page-header"><div class="page-title"><span class="role-chip">{{ role }}</span><h1>Solicitudes de evaluación</h1><p class="page-subtitle">Acciones disponibles según su rol y el estado de cada solicitud.</p></div></div>
+{% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
+<section class="stack-list">
+{% for solicitud in solicitudes %}
+  <article class="card request-card">
+    <div class="request-header">
+      <div><h2>{{ solicitud.proyecto.titulo_tecnologia }}</h2><p class="text-muted">{{ solicitud.proyecto.rama_innovacion }}</p></div>
+      <span class="badge badge-warning">{{ solicitud.estado }}</span>
+    </div>
+    <div class="summary-grid">
+      <p><strong>Nivel estimado:</strong> {% if solicitud.nivel_estimado != None %}TRL {{ solicitud.nivel_estimado }}{% else %}Pendiente{% endif %}</p>
+      <p><strong>Evaluador:</strong> {{ solicitud.id_evaluador|default:'Sin asignar' }}</p>
+      <p><strong>Fecha:</strong> {{ solicitud.fecha_envio }}</p>
+    </div>
+    {% if role != 'ADMINISTRADOR' %}<a class="btn btn-secondary" href="{% url 'tabla_evidencias' solicitud.proyecto.id_proyecto %}">Ver evidencias</a>{% endif %}
+
+    {% if role == 'GESTOR_IDI' or role == 'ADMINISTRADOR' %}
+      {% if solicitud.estado == 'ENVIADA' or solicitud.estado == 'ASIGNADA' %}
+      <form method="post" class="inline-form">{% csrf_token %}<input type="hidden" name="action" value="assign"><input type="hidden" name="id_solicitud" value="{{ solicitud.id_solicitud }}">
+        <label for="evaluador-{{ solicitud.id_solicitud }}">Asignar evaluador</label>
+        <select id="evaluador-{{ solicitud.id_solicitud }}" name="id_evaluador" required><option value="">Seleccione...</option>{% for evaluador in evaluadores %}<option value="{{ evaluador.id_usuario }}" {% if evaluador.id_usuario == solicitud.id_evaluador %}selected{% endif %}>{{ evaluador.nombre_completo }} · {{ evaluador.correo_electronico }}</option>{% endfor %}</select>
+        <button class="btn btn-primary" type="submit">Asignar</button>
+      </form>
+      {% endif %}
+    {% endif %}
+
+    {% if solicitud.observaciones %}
+      <section class="observations"><h3>Observaciones</h3>
+      {% for observacion in solicitud.observaciones %}
+        <div class="observation-item"><div><strong>{{ observacion.estado }}</strong><p>{{ observacion.descripcion_problema }}</p><small>{{ observacion.fecha_creacion }}</small></div>
+          {% if role == 'INVESTIGADOR' and observacion.estado == 'PENDIENTE' %}
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="observation_state"><input type="hidden" name="id_solicitud" value="{{ solicitud.id_solicitud }}"><input type="hidden" name="id_observacion" value="{{ observacion.id_observacion }}"><button class="btn btn-secondary" type="submit">Marcar corregida</button></form>
+          {% elif role == 'EVALUADOR' and observacion.estado == 'CORREGIDA' %}
+            <form method="post">{% csrf_token %}<input type="hidden" name="action" value="observation_state"><input type="hidden" name="id_solicitud" value="{{ solicitud.id_solicitud }}"><input type="hidden" name="id_observacion" value="{{ observacion.id_observacion }}"><button class="btn btn-secondary" type="submit">Cerrar observación</button></form>
+          {% endif %}
+        </div>
+      {% endfor %}</section>
+    {% endif %}
+
+    {% if role == 'EVALUADOR' and not solicitud.calificacion %}
+      {% if solicitud.estado == 'ASIGNADA' or solicitud.estado == 'OBSERVADA' or solicitud.estado == 'EN_EVALUACION' %}
+      <div class="action-grid">
+        <form method="post" class="form-panel">{% csrf_token %}<input type="hidden" name="action" value="observe"><input type="hidden" name="id_solicitud" value="{{ solicitud.id_solicitud }}"><label for="obs-{{ solicitud.id_solicitud }}">Nueva observación</label><textarea id="obs-{{ solicitud.id_solicitud }}" name="descripcion_problema" minlength="3" maxlength="4000" required></textarea><button class="btn btn-secondary" type="submit">Enviar observación</button></form>
+        <form method="post" class="form-panel">{% csrf_token %}<input type="hidden" name="action" value="rate"><input type="hidden" name="id_solicitud" value="{{ solicitud.id_solicitud }}"><label for="level-{{ solicitud.id_solicitud }}">Nivel aprobado (1-9)</label><input id="level-{{ solicitud.id_solicitud }}" type="number" name="nivel_aprobado" min="1" max="9" required><label for="rating-{{ solicitud.id_solicitud }}">Dictamen final</label><textarea id="rating-{{ solicitud.id_solicitud }}" name="dictamen_auditoria" minlength="3" maxlength="4000" required></textarea><button class="btn btn-primary" type="submit">Registrar calificación</button></form>
+      </div>
+      {% endif %}
+    {% endif %}
+
+    {% if solicitud.calificacion %}<div class="alert alert-success"><strong>Resultado: TRL {{ solicitud.calificacion.nivel_aprobado }}</strong><span>{{ solicitud.calificacion.dictamen_auditoria }}</span></div>{% endif %}
+  </article>
+{% empty %}<article class="card empty-state">No existen solicitudes disponibles para su rol.</article>{% endfor %}
+</section>
+{% endblock %}

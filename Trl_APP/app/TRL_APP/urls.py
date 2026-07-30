@@ -12,7 +12,11 @@ urlpatterns = [
     path('proyecto/<uuid:proyecto_id>/evaluar/', views.evaluar_trl, name='evaluar_trl'),
     path('proyecto/<uuid:proyecto_id>/evidencias/', views.tabla_evidencias, name='tabla_evidencias'),
     path('evidencia/<uuid:documento_id>/descargar/', views.descargar_evidencia, name='descargar_evidencia'),
+    path('solicitudes/', views.solicitudes_view, name='solicitudes'),
     path('auditoria/', views.logs_auditoria, name='logs_auditoria'),
     path('admin/crear-usuario/', views.create_user_view, name='create_user'),
+    path('admin/usuarios/', views.usuarios_view, name='usuarios'),
     path('gestion/configuracion-trl/', views.configuracion_trl_view, name='configuracion_trl'),
+    path('gestion/dashboard/', views.dashboard_view, name='dashboard'),
+    path('gestion/reportes/<str:numero>/descargar/', views.descargar_reporte, name='descargar_reporte'),
 ]

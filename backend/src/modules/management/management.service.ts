@@ -33,10 +33,9 @@ export class ManagementService {
   async dashboard(user: RequestPrincipal) {
     const rows = await this.projects.createQueryBuilder('p')
       .leftJoin('p.solicitudes', 's')
-      .select('COALESCE(s.estado, :without)', 'estado')
+      .select("COALESCE(s.estado::text, 'SIN_SOLICITUD')", 'estado')
       .addSelect('COUNT(DISTINCT p.id_proyecto)', 'total')
-      .setParameter('without', 'SIN_SOLICITUD')
-      .groupBy('COALESCE(s.estado, :without)')
+      .groupBy("COALESCE(s.estado::text, 'SIN_SOLICITUD')")
       .getRawMany<{ estado: string; total: string }>();
     const statistics = Object.fromEntries(rows.map((row) => [row.estado, Number(row.total)]));
     return this.dashboards.save(this.dashboards.create({

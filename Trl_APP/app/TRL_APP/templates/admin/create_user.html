@@ -1,0 +1,25 @@
+{% extends 'master.html' %}
+{% block title %}Crear usuario | TRL UTPL{% endblock %}
+{% block contenido %}
+<div class="page-header">
+  <div class="page-title"><span class="role-chip">Administrador</span><h1>Crear usuario</h1><p class="page-subtitle">Registre una cuenta y entregue su secreto MFA una sola vez por un canal seguro.</p></div>
+  <a href="{% url 'usuarios' %}" class="btn btn-secondary">Ver usuarios</a>
+</div>
+{% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
+{% if success_data %}
+  <section class="card secret-card">
+    <h2>Usuario creado correctamente</h2>
+    <p><strong>{{ success_data.nombre_completo }}</strong> · {{ success_data.correo_electronico }} · {{ success_data.rol }}</p>
+    <p>Secreto MFA (solo se muestra ahora):</p>
+    <code class="secret-value">{{ success_data.mfa_secret }}</code>
+    <p class="text-muted">No se envía a servicios externos ni se almacena en el navegador. Cópielo y entréguelo al usuario de forma segura.</p>
+  </section>
+{% else %}
+  <section class="card form-section">
+    <form method="post" novalidate>{% csrf_token %}
+      {% for field in form %}<div class="form-group">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+      <button type="submit" class="btn btn-primary">Crear usuario</button>
+    </form>
+  </section>
+{% endif %}
+{% endblock %}

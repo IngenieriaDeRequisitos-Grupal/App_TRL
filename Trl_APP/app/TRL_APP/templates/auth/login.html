@@ -9,28 +9,25 @@
 </head>
 <body>
   <main class="login-wrapper">
-    <section class="card login-card">
-      <div class="brand">
-        <div class="brand-badge">TRL</div>
-        <div>
-          <p class="eyebrow">Acceso seguro</p>
-          <h1>TRL UTPL</h1>
-        </div>
+    <section class="auth-shell">
+      <div class="auth-brand-panel">
+        <img src="{% static 'img/trl-utpl-logo.png' %}" alt="Logotipo TRL UTPL" class="auth-logo">
+        <div><p class="eyebrow auth-eyebrow">Universidad Técnica Particular de Loja</p><h1>Plataforma TRL</h1></div>
+        <p>Evaluación de madurez tecnológica, evidencias y seguimiento institucional en un solo lugar.</p>
+        <span class="auth-security-note">Acceso protegido con autenticación multifactor</span>
       </div>
-      <p class="text-muted">Evaluación de madurez tecnológica y seguimiento institucional.</p>
-      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
-      <form method="post" novalidate>
-        {% csrf_token %}
-        <div class="form-group mb-3">
-          {{ form.correo_electronico.label_tag }}
-          {{ form.correo_electronico }}
-        </div>
-        <div class="form-group mb-3">
-          {{ form.contrasena.label_tag }}
-          {{ form.contrasena }}
-        </div>
-        <button type="submit" class="btn btn-primary full-width">Continuar con MFA</button>
-      </form>
+      <div class="auth-form-panel">
+        <p class="eyebrow">Acceso seguro</p>
+        <h2>Bienvenido</h2>
+        <p class="text-muted">Ingrese sus credenciales institucionales para continuar.</p>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="form-group mb-3">{{ form.correo_electronico.label_tag }}{{ form.correo_electronico }}</div>
+          <div class="form-group mb-3">{{ form.contrasena.label_tag }}{{ form.contrasena }}</div>
+          <button type="submit" class="btn btn-primary full-width">Continuar con MFA <span aria-hidden="true">→</span></button>
+        </form>
+      </div>
     </section>
   </main>
 </body>
