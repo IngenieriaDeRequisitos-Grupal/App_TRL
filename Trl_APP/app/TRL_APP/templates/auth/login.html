@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar Sesión | TRL-UTPL</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    /* Estilos específicos para centrar el login */
+    .login-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      padding: 2.5rem 2rem;
+    }
+    .login-brand {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-wrapper">
+    <main class="card login-card">
+      <div class="login-brand">
+        <h1 style="margin-bottom: 0.5rem;">TRL-UTPL</h1>
+        <p style="color: var(--text-muted); font-size: 0.875rem;">Evaluación de Madurez Tecnológica</p>
+      </div>
+
+      <form method="POST" action="{% url 'login' %}">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label for="username" class="form-label">Correo Institucional</label>
+          <input type="email" id="username" name="username" class="form-control" placeholder="usuario@utpl.edu.ec" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Contraseña</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Iniciar Sesión</button>
+      </form>
+    </main>
+  </div>
+</body>
+</html>

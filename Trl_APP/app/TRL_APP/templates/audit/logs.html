@@ -1,0 +1,42 @@
+{% extends 'master.html' %}
+
+{% block contenido %}
+<div style="margin-bottom: 2rem;">
+  <h1 style="margin-bottom: 0.25rem;">Auditoría del Sistema</h1>
+  <p style="color: var(--text-muted); margin: 0;">Trazabilidad de eventos técnicos y sincronización con API NestJS.</p>
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+  <div style="padding: 1rem 1.5rem; background-color: var(--bg-body); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="margin: 0; font-size: 1rem;">Visor de Logs</h3>
+    <button type="button" class="btn btn-secondary" style="min-height: 32px; padding: 0 1rem; font-size: 0.875rem;">Exportar CSV</button>
+  </div>
+  
+  <div class="audit-log" style="border: none; border-radius: 0;">
+    <div style="padding: 0.5rem 0; border-bottom: 1px dashed var(--border);">
+      <span style="color: var(--info); display: inline-block; width: 180px;">[2026-07-29 21:05:12]</span> 
+      <span style="color: var(--warning); font-weight: bold; display: inline-block; width: 60px;">POST</span> 
+      <span style="color: var(--text-main);">/api/auth/login</span> 
+      <span style="color: var(--success); float: right;">200 OK</span>
+    </div>
+    <div style="padding: 0.5rem 0; border-bottom: 1px dashed var(--border);">
+      <span style="color: var(--info); display: inline-block; width: 180px;">[2026-07-29 21:06:45]</span> 
+      <span style="color: var(--primary); font-weight: bold; display: inline-block; width: 60px;">GET</span> 
+      <span style="color: var(--text-main);">/api/projects</span> 
+      <span style="color: var(--success); float: right;">200 OK</span>
+    </div>
+    <div style="padding: 0.5rem 0; border-bottom: 1px dashed var(--border);">
+      <span style="color: var(--info); display: inline-block; width: 180px;">[2026-07-29 21:12:03]</span> 
+      <span style="color: var(--warning); font-weight: bold; display: inline-block; width: 60px;">POST</span> 
+      <span style="color: var(--text-main);">/api/evaluations/1</span> 
+      <span style="color: var(--danger); float: right;">400 BAD REQUEST</span>
+    </div>
+    <div style="padding: 0.5rem 0;">
+      <span style="color: var(--info); display: inline-block; width: 180px;">[2026-07-29 21:12:15]</span> 
+      <span style="color: var(--warning); font-weight: bold; display: inline-block; width: 60px;">POST</span> 
+      <span style="color: var(--text-main);">/api/evaluations/1</span> 
+      <span style="color: var(--success); float: right;">201 CREATED</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

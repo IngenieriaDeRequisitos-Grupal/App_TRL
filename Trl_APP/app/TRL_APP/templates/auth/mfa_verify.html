@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="max-width: 480px;">
+    <h2>Verificación de Dos Pasos</h2>
+    <p>Abra su aplicación de autenticación (ej. Google Authenticator) e ingrese el código para continuar.</p>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.mfa_ticket }}
+
+            <div class="form-group">
+                {{ form.codigo.label_tag }}
+                {{ form.codigo }}
+            </div>
+
+            {% if error %}
+                <p class="form-text-error">{{ error }}</p>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Verificar e Ingresar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'master.html' %}
+
+{% block contenido %}
+<div style="margin-bottom: 2rem;">
+  <a href="{% url 'listado_proyectos' %}" style="color: var(--primary); text-decoration: none; font-weight: 500;">← Volver al Portafolio</a>
+  <h1 style="margin-top: 1rem; margin-bottom: 0.25rem;">Repositorio de Evidencias</h1>
+  <p style="color: var(--text-muted); margin: 0;">Proyecto: Sistema de Asistencia QR</p>
+</div>
+
+<div class="table-responsive">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID Referencia</th>
+        <th>Tipo de Documento</th>
+        <th>Fecha de Carga</th>
+        <th>Estado de Consentimiento</th>
+        <th style="text-align: right;">Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>EVD-2026-001</strong></td>
+        <td>Acta de Laboratorio (PDF)</td>
+        <td>25/07/2026</td>
+        <td><span class="badge badge-success">Validado</span></td>
+        <td style="text-align: right;">
+          <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: 0 1rem;">Ver</button>
+        </td>
+      </tr>
+      <tr>
+        <td><strong>EVD-2026-002</strong></td>
+        <td>Consentimiento Informado</td>
+        <td>28/07/2026</td>
+        <td><span class="badge badge-warning">Pendiente Firma</span></td>
+        <td style="text-align: right;">
+          <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: 0 1rem;">Ver</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}
