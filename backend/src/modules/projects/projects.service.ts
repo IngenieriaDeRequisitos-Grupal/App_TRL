@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { NombreRol } from '../../common/domain.enums';
+import { EstadoSolicitud, NombreRol } from '../../common/domain.enums';
 import { RequestPrincipal } from '../../common/security/security.decorators';
 import { Investigador, ProyectoInvencion, ServicioNube } from '../../database/entities/trl.entities';
 import { CreateProjectDto, ProjectListQueryDto, UpdateProjectDto } from './projects.dto';
@@ -33,7 +33,13 @@ export class ProjectsService {
     if (user.rol === NombreRol.INVESTIGADOR) {
       builder.where('i.id_usuario = :userId', { userId: user.id_usuario });
     } else if (user.rol === NombreRol.EVALUADOR) {
-      builder.innerJoin('p.solicitudes', 's', 's.id_evaluador = :userId', { userId: user.id_usuario });
+      builder
+        .innerJoin('p.solicitudes', 's')
+        .where(
+          '(s.id_evaluador = :userId OR (s.id_evaluador IS NULL AND s.estado = :sentState))',
+          { userId: user.id_usuario, sentState: EstadoSolicitud.ENVIADA },
+        )
+        .distinct(true);
     }
     const [data, total] = await builder.getManyAndCount();
     return { data, total, page: query.page, limit: query.limit };

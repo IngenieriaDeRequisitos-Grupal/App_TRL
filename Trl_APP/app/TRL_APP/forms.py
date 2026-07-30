@@ -29,6 +29,36 @@ class MfaForm(forms.Form):
     )
 
 
+class RegisterForm(forms.Form):
+    nombre_completo = forms.CharField(label='Nombre completo', min_length=3, max_length=160)
+    cedula = forms.RegexField(r'^\d{8,20}$', label='Cédula')
+    correo_electronico = forms.EmailField(label='Correo electrónico')
+    contrasena = forms.CharField(
+        label='Contraseña',
+        min_length=12,
+        max_length=128,
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+    )
+    confirmar_contrasena = forms.CharField(
+        label='Confirmar contraseña',
+        widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'}),
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        password = cleaned.get('contrasena', '')
+        if password and not (
+            any(char.islower() for char in password)
+            and any(char.isupper() for char in password)
+            and any(char.isdigit() for char in password)
+            and any(not char.isalnum() for char in password)
+        ):
+            self.add_error('contrasena', 'Incluya mayúscula, minúscula, número y símbolo.')
+        if password != cleaned.get('confirmar_contrasena'):
+            self.add_error('confirmar_contrasena', 'Las contraseñas no coinciden.')
+        return cleaned
+
+
 class ProyectoForm(forms.Form):
     titulo_tecnologia = forms.CharField(label='Título de la tecnología', min_length=3, max_length=220, widget=forms.TextInput(attrs={'class': 'form-control'}))
     rama_innovacion = forms.CharField(label='Rama de innovación', min_length=2, max_length=160, widget=forms.TextInput(attrs={'class': 'form-control'}))

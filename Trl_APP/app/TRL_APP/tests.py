@@ -26,6 +26,25 @@ class FrontendIntegrationViewsTests(SimpleTestCase):
         self.assertNotIn('ticket=', response.url)
 
     @patch('TRL_APP.views.request_api')
+    def test_public_registration_creates_only_investigator(self, api):
+        api.return_value = {
+            'correo_electronico': 'nuevo@trl.local',
+            'rol': 'INVESTIGADOR',
+            'mfa_secret': 'SECRETO-MFA-NUEVO',
+        }
+        response = self.client.post(reverse('register'), {
+            'nombre_completo': 'Nuevo Investigador',
+            'cedula': '1100000099',
+            'correo_electronico': 'nuevo@trl.local',
+            'contrasena': 'Cuenta-Segura-2026!',
+            'confirmar_contrasena': 'Cuenta-Segura-2026!',
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(api.call_args.args[:2], ('POST', '/auth/register'))
+        self.assertNotIn('rol', api.call_args.kwargs['json'])
+        self.assertContains(response, 'SECRETO-MFA-NUEVO')
+
+    @patch('TRL_APP.views.request_api')
     def test_mfa_stores_access_token_and_user(self, api):
         self.set_session({'mfa_ticket': 'ticket-seguro-de-prueba'})
         api.side_effect = [

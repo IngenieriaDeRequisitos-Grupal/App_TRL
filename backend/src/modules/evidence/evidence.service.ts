@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import { Repository } from 'typeorm';
-import { NombreRol } from '../../common/domain.enums';
+import { EstadoSolicitud, NombreRol } from '../../common/domain.enums';
 import { CryptoService } from '../../common/security/crypto.service';
 import { RequestPrincipal } from '../../common/security/security.decorators';
 import { Cuestionario, DocumentoAdjunto } from '../../database/entities/trl.entities';
@@ -58,8 +58,11 @@ export class EvidenceService {
     if (!document) throw new NotFoundException('Evidencia no encontrada');
     const owner = document.cuestionario.solicitud.proyecto.investigador.id_usuario === user.id_usuario;
     const assigned = document.cuestionario.solicitud.evaluador?.id_usuario === user.id_usuario;
+    const availableToEvaluator = user.rol === NombreRol.EVALUADOR
+      && !document.cuestionario.solicitud.evaluador
+      && document.cuestionario.solicitud.estado === EstadoSolicitud.ENVIADA;
     const manager = user.rol === NombreRol.GESTOR_IDI;
-    if (!owner && !assigned && !manager) throw new ForbiddenException('Acceso denegado a la evidencia');
+    if (!owner && !assigned && !availableToEvaluator && !manager) throw new ForbiddenException('Acceso denegado a la evidencia');
     const bytes = this.crypto.decryptBuffer(document.contenido_cifrado, `documento:${id}`);
     if (this.crypto.sha256(bytes) !== document.sha256) throw new BadRequestException('Falló la verificación de integridad');
     return { filename: document.nombre_archivo, mimeType: 'application/pdf', bytes };
@@ -79,6 +82,7 @@ export class EvidenceService {
       const request = documents[0]?.cuestionario.solicitud;
       const allowed = request?.proyecto.investigador.id_usuario === user.id_usuario
         || request?.evaluador?.id_usuario === user.id_usuario
+        || (user.rol === NombreRol.EVALUADOR && !request?.evaluador && request?.estado === EstadoSolicitud.ENVIADA)
         || user.rol === NombreRol.GESTOR_IDI;
       if (!allowed) throw new ForbiddenException('Acceso denegado a las evidencias');
     }

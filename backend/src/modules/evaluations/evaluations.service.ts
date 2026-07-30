@@ -72,7 +72,10 @@ export class EvaluationsService {
     if (user.rol === NombreRol.INVESTIGADOR) {
       builder.where('i.id_usuario = :userId', { userId: user.id_usuario });
     } else if (user.rol === NombreRol.EVALUADOR) {
-      builder.where('e.id_usuario = :userId', { userId: user.id_usuario });
+      builder.where(
+        '(e.id_usuario = :userId OR (e.id_usuario IS NULL AND s.estado = :sentState))',
+        { userId: user.id_usuario, sentState: EstadoSolicitud.ENVIADA },
+      );
     }
     const requests = await builder.getMany();
     return requests.map((request) => ({
@@ -158,7 +161,7 @@ export class EvaluationsService {
   }
 
   async addObservation(user: RequestPrincipal, requestId: string, dto: CreateObservationDto) {
-    const request = await this.assignedRequest(user, requestId);
+    const request = await this.reviewableRequest(user, requestId);
     if (![EstadoSolicitud.ASIGNADA, EstadoSolicitud.EN_EVALUACION, EstadoSolicitud.OBSERVADA].includes(request.estado)) {
       throw new ConflictException('La solicitud no admite observaciones');
     }
@@ -189,7 +192,7 @@ export class EvaluationsService {
   }
 
   async rate(user: RequestPrincipal, requestId: string, dto: FinalRatingDto) {
-    const request = await this.assignedRequest(user, requestId);
+    const request = await this.reviewableRequest(user, requestId);
     if (![EstadoSolicitud.ASIGNADA, EstadoSolicitud.EN_EVALUACION, EstadoSolicitud.OBSERVADA].includes(request.estado)) {
       throw new ConflictException('La solicitud no puede calificarse');
     }
@@ -220,10 +223,34 @@ export class EvaluationsService {
     return request;
   }
 
-  private async assignedRequest(user: RequestPrincipal, id: string): Promise<SolicitudEvaluacion> {
-    const request = await this.findRequest(id);
-    if (!request.evaluador || request.evaluador.id_usuario !== user.id_usuario) throw new ForbiddenException('Solicitud no asignada');
-    return request;
+  private async reviewableRequest(user: RequestPrincipal, id: string): Promise<SolicitudEvaluacion> {
+    return this.dataSource.transaction(async (manager) => {
+      const repository = manager.getRepository(SolicitudEvaluacion);
+      const lockedRequest = await repository.findOne({
+        where: { id_solicitud: id },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!lockedRequest) throw new NotFoundException('Solicitud no encontrada');
+      const request = await repository.findOne({
+        where: { id_solicitud: id },
+        relations: {
+          proyecto: { investigador: true },
+          evaluador: true,
+          cuestionario: { configuracion: true },
+          nivel: true,
+        },
+      });
+      if (!request) throw new NotFoundException('Solicitud no encontrada');
+      if (request.evaluador?.id_usuario === user.id_usuario) return request;
+      if (!request.evaluador && request.estado === EstadoSolicitud.ENVIADA) {
+        const evaluator = await manager.getRepository(Evaluador).findOne({ where: { id_usuario: user.id_usuario } });
+        if (!evaluator) throw new ForbiddenException('El usuario no es un evaluador activo');
+        request.evaluador = evaluator;
+        request.estado = EstadoSolicitud.ASIGNADA;
+        return repository.save(request);
+      }
+      throw new ForbiddenException('Solicitud asignada a otro evaluador');
+    });
   }
 
   private async findRequest(id: string): Promise<SolicitudEvaluacion> {

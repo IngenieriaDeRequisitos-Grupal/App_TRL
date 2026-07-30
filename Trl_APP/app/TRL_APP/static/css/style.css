@@ -557,6 +557,18 @@ label { font-weight: 600; }
 .auth-form-panel h2 { font-size: 1.9rem; color: var(--primary); }
 .login-card { border-top: 5px solid var(--utpl-yellow); }
 .brand-logo { width: 76px; height: 84px; object-fit: contain; border-radius: 14px; }
+.auth-alt { margin-top: 1.4rem; color: var(--text-muted); text-align: center; font-size: .9rem; }
+.auth-alt a { color: var(--primary); font-weight: 700; text-decoration: none; }
+.auth-alt a:hover { text-decoration: underline; }
+.register-wrapper { align-items: flex-start; }
+.register-card { width: min(720px, 100%); padding: clamp(1.5rem, 4vw, 2.5rem); border-top: 5px solid var(--utpl-yellow); }
+.register-header { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; }
+.register-header h1 { margin-bottom: .35rem; color: var(--primary); }
+.register-header .text-muted { margin-bottom: 0; }
+.register-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+.register-form .form-group:nth-child(n+4), .register-form .btn { grid-column: 1 / -1; }
+.registration-success { padding: 1.25rem; border-radius: 16px; background: var(--success-bg); }
+.registration-success h2 { color: var(--success); }
 
 @media (max-width: 1280px) {
   .navbar-container { align-items: flex-start; flex-direction: column; padding: .9rem 0 1rem; }
@@ -580,5 +592,8 @@ label { font-weight: 600; }
   .auth-logo { width: 88px; height: 96px; margin-bottom: 1rem; }
   .auth-security-note { margin-top: 1rem; }
   .auth-form-panel { padding: 2rem; }
+  .register-header { align-items: flex-start; }
+  .register-form { grid-template-columns: 1fr; }
+  .register-form .form-group, .register-form .btn { grid-column: 1; }
   .button-row .btn { flex: 1 1 100%; }
 }

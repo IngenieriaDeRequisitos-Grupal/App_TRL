@@ -41,7 +41,7 @@
     {% endif %}
 
     {% if role == 'EVALUADOR' and not solicitud.calificacion %}
-      {% if solicitud.estado == 'ASIGNADA' or solicitud.estado == 'OBSERVADA' or solicitud.estado == 'EN_EVALUACION' %}
+      {% if solicitud.estado == 'ENVIADA' or solicitud.estado == 'ASIGNADA' or solicitud.estado == 'OBSERVADA' or solicitud.estado == 'EN_EVALUACION' %}
       <div class="action-grid">
         <form method="post" class="form-panel">{% csrf_token %}<input type="hidden" name="action" value="observe"><input type="hidden" name="id_solicitud" value="{{ solicitud.id_solicitud }}"><label for="obs-{{ solicitud.id_solicitud }}">Nueva observación</label><textarea id="obs-{{ solicitud.id_solicitud }}" name="descripcion_problema" minlength="3" maxlength="4000" required></textarea><button class="btn btn-secondary" type="submit">Enviar observación</button></form>
         <form method="post" class="form-panel">{% csrf_token %}<input type="hidden" name="action" value="rate"><input type="hidden" name="id_solicitud" value="{{ solicitud.id_solicitud }}"><label for="level-{{ solicitud.id_solicitud }}">Nivel aprobado (1-9)</label><input id="level-{{ solicitud.id_solicitud }}" type="number" name="nivel_aprobado" min="1" max="9" required><label for="rating-{{ solicitud.id_solicitud }}">Dictamen final</label><textarea id="rating-{{ solicitud.id_solicitud }}" name="dictamen_auditoria" minlength="3" maxlength="4000" required></textarea><button class="btn btn-primary" type="submit">Registrar calificación</button></form>

@@ -17,6 +17,7 @@ from .forms import (
     ObservacionForm,
     ProyectoForm,
     ReporteForm,
+    RegisterForm,
     evaluation_initial,
 )
 
@@ -76,6 +77,30 @@ def login_view(request):
         except ApiError as exc:
             error = exc.message
     return render(request, 'auth/login.html', {'form': form, 'error': error})
+
+
+def register_view(request):
+    if is_authenticated(request):
+        return redirect('listado_proyectos')
+    error = None
+    success_data = None
+    form = RegisterForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        payload = {
+            key: value
+            for key, value in form.cleaned_data.items()
+            if key != 'confirmar_contrasena'
+        }
+        try:
+            success_data = request_api('POST', '/auth/register', json=payload)
+            form = RegisterForm()
+        except ApiError as exc:
+            error = exc.message
+    return render(request, 'auth/register.html', {
+        'form': form,
+        'error': error,
+        'success_data': success_data,
+    })
 
 
 def mfa_verify_view(request):
