@@ -20,6 +20,7 @@ Estado: compilación, pruebas unitarias e integración local PostgreSQL aprobada
 - Comparación contra hash ficticio cuando el correo no existe para reducir enumeración por tiempo.
 - Bloqueo temporal tras 3 intentos fallidos de contraseña o MFA durante 15 minutos.
 - MFA TOTP obligatorio, ventana máxima de ±1 período y secreto cifrado; el secreto solo se devuelve durante el aprovisionamiento.
+- En desarrollo, `MFA_CONSOLE_OUTPUT=true` imprime el TOTP vigente de 6 dígitos después de validar la contraseña; cambia cada 30 segundos y la salida está bloqueada cuando `NODE_ENV=production`.
 - JWT `HS256` con algoritmo permitido explícitamente, `issuer`, `audience`, propósito (`mfa` o `access`), expiración corta y validación contra sesión PostgreSQL.
 - PostgreSQL solo almacena SHA-256 del JWT activo. Cerrar sesión, suspender usuario o cambiar rol revoca la sesión e incrementa su versión.
 - Límites específicos de 5 solicitudes/minuto para login y MFA, además del límite global de 100 solicitudes/minuto.
@@ -102,6 +103,7 @@ Antes de producción, Jurídico y el Delegado de Protección de Datos deben dete
 4. **Rotación de claves** — `src/common/security/crypto.service.ts`: el sobre identifica versión de formato, no `keyId`. Reemplazar directamente `FIELD_ENCRYPTION_KEY_BASE64` impediría descifrar datos históricos. Antes de rotar se requiere keyring/KMS, `keyId`, lectura con claves anteriores y migración gradual.
 5. **Matriz institucional TRL** — la estructura y el algoritmo de compuerta están implementados, pero los criterios oficiales exactos no estaban definidos de forma ejecutable en los documentos. El gestor debe cargar una matriz aprobada; inventar criterios en código alteraría el resultado de negocio.
 6. **Validación en infraestructura de staging** — la migración fue ejecutada correctamente sobre PostgreSQL 16 local. Aún debe repetirse en staging con backup/restauración. En servicios gestionados se debe confirmar que `trl_app` pueda crear la extensión confiable `pgcrypto` o preinstalarla con la cuenta propietaria.
+7. **Código MFA en consola** — se habilitó únicamente para desarrollo por solicitud del equipo. Los logs pasan a contener un factor temporal durante su ventana de validez; deben protegerse y `MFA_CONSOLE_OUTPUT` debe permanecer en `false` fuera del equipo local.
 
 ## 6. Verificación realizada
 

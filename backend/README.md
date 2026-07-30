@@ -11,6 +11,8 @@ API NestJS/TypeORM para la evaluación de madurez tecnológica. La única persis
 
 Las migraciones se aplican al iniciar. `synchronize` está deshabilitado.
 
+En desarrollo puede habilitarse `MFA_CONSOLE_OUTPUT=true`. Después de un login válido, la consola de la API muestra un código TOTP de 6 dígitos que cambia cada 30 segundos. La aplicación impide esta salida cuando `NODE_ENV=production`.
+
 ## Contrato de configuración TRL
 
 El gestor I+D+i publica una matriz versionada con nueve reglas secuenciales:

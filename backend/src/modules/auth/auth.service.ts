@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -23,6 +23,8 @@ interface MfaPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
@@ -42,6 +44,7 @@ export class AuthService {
       .leftJoinAndSelect('user.rol', 'rol')
       .leftJoinAndSelect('user.sesion', 'sesion')
       .leftJoinAndSelect('sesion.mfa', 'mfa')
+      .addSelect('mfa.codigo_totp')
       .where('user.correo_electronico = :email', { email })
       .getOne();
 
@@ -62,6 +65,7 @@ export class AuthService {
     user.intentos_login_fallidos = 0;
     user.bloqueado_hasta = null;
     await this.users.save(user);
+    this.logDevelopmentOtp(user.sesion);
 
     const ttl = Number(this.config.get('JWT_MFA_TTL_SECONDS') ?? 300);
     const payload: MfaPayload = {
@@ -161,6 +165,20 @@ export class AuthService {
       user.bloqueado_hasta = new Date(Date.now() + LOCK_MINUTES * 60_000);
     }
     await this.users.save(user);
+  }
+
+  private logDevelopmentOtp(session: Sesion): void {
+    const enabled = String(this.config.get('MFA_CONSOLE_OUTPUT') ?? 'false').toLowerCase() === 'true';
+    if (!enabled || this.config.get('NODE_ENV') === 'production' || !session.mfa?.codigo_totp) return;
+    try {
+      const secret = this.crypto.decryptText(session.mfa.codigo_totp, `mfa:${session.id_sesion}`);
+      const code = authenticator.generate(secret);
+      const remainingSeconds = 30 - (Math.floor(Date.now() / 1000) % 30);
+      // SECURITY: salida de conveniencia limitada a desarrollo; jamás habilitar MFA_CONSOLE_OUTPUT en producción.
+      this.logger.warn(`[DEV MFA] codigo=${code} expira_en=${remainingSeconds}s`);
+    } catch {
+      this.logger.warn('[DEV MFA] no fue posible generar el código temporal');
+    }
   }
 
   private signOptions(expiresIn: number) {
