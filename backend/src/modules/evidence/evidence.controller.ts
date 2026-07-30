@@ -11,7 +11,7 @@ export class EvidenceController {
   constructor(private readonly evidence: EvidenceService) {}
 
   @Get('project/:id')
-  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR, NombreRol.GESTOR_IDI)
+  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR)
   listByProject(@CurrentUser() user: RequestPrincipal, @Param('id', ParseUUIDPipe) id: string) {
     return this.evidence.listByProject(user, id);
   }
@@ -24,7 +24,7 @@ export class EvidenceController {
   }
 
   @Get(':id')
-  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR, NombreRol.GESTOR_IDI)
+  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR)
   async download(
     @CurrentUser() user: RequestPrincipal,
     @Param('id', ParseUUIDPipe) id: string,

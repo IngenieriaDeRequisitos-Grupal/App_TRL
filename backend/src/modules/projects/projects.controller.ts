@@ -15,7 +15,7 @@ export class ProjectsController {
   }
 
   @Get()
-  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR, NombreRol.GESTOR_IDI, NombreRol.ADMINISTRADOR)
+  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR, NombreRol.ADMINISTRADOR)
   list(@CurrentUser() user: RequestPrincipal, @Query() query: ProjectListQueryDto) {
     return this.projects.list(user, query);
   }

@@ -16,7 +16,6 @@ from .forms import (
     MfaForm,
     ObservacionForm,
     ProyectoForm,
-    ReporteForm,
     RegisterForm,
     evaluation_initial,
 )
@@ -28,6 +27,10 @@ def is_authenticated(request):
 
 def current_role(request):
     return request.session.get('user', {}).get('rol')
+
+
+def home_route(request):
+    return 'dashboard' if current_role(request) == 'GESTOR_IDI' else 'listado_proyectos'
 
 
 def auth_required(view_func):
@@ -66,7 +69,7 @@ def handle_api_error(request, error):
 
 def login_view(request):
     if is_authenticated(request):
-        return redirect('listado_proyectos')
+        return redirect(home_route(request))
     error = None
     form = LoginForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -81,7 +84,7 @@ def login_view(request):
 
 def register_view(request):
     if is_authenticated(request):
-        return redirect('listado_proyectos')
+        return redirect(home_route(request))
     error = None
     success_data = None
     form = RegisterForm(request.POST or None)
@@ -120,7 +123,7 @@ def mfa_verify_view(request):
             request.session.pop('mfa_ticket', None)
             request.session['user'] = request_api('GET', '/auth/me', token=result['access_token'])
             legal = request_api('GET', '/legal/status', token=result['access_token'])
-            destination = 'consentimiento' if any(not item['aceptado'] for item in legal) else 'listado_proyectos'
+            destination = 'consentimiento' if any(not item['aceptado'] for item in legal) else home_route(request)
             return redirect(destination)
         except ApiError as exc:
             error = exc.message
@@ -142,7 +145,7 @@ def consentimiento_view(request):
                     'decision': 'ACEPTADO',
                     'version_documento': document['version'],
                 })
-            return redirect('listado_proyectos')
+            return redirect(home_route(request))
     except ApiError as exc:
         redirect_response = handle_api_error(request, exc)
         if redirect_response:
@@ -165,7 +168,7 @@ def logout_view(request):
     return redirect('login')
 
 
-@role_required('INVESTIGADOR', 'EVALUADOR', 'GESTOR_IDI', 'ADMINISTRADOR')
+@role_required('INVESTIGADOR', 'EVALUADOR', 'ADMINISTRADOR')
 def listado_proyectos(request):
     error = None
     projects = []
@@ -269,7 +272,7 @@ def evaluar_trl(request, proyecto_id):
     })
 
 
-@role_required('INVESTIGADOR', 'EVALUADOR', 'GESTOR_IDI')
+@role_required('INVESTIGADOR', 'EVALUADOR')
 def tabla_evidencias(request, proyecto_id):
     error = None
     evaluation = None
@@ -310,7 +313,7 @@ def tabla_evidencias(request, proyecto_id):
     })
 
 
-@role_required('INVESTIGADOR', 'EVALUADOR', 'GESTOR_IDI')
+@role_required('INVESTIGADOR', 'EVALUADOR')
 def descargar_evidencia(request, documento_id):
     try:
         response = download_api(f'/evidence/{documento_id}', token(request))
@@ -322,14 +325,14 @@ def descargar_evidencia(request, documento_id):
         return HttpResponse(exc.message, status=exc.status)
 
 
-@role_required('INVESTIGADOR', 'EVALUADOR', 'GESTOR_IDI', 'ADMINISTRADOR')
+@role_required('INVESTIGADOR', 'EVALUADOR', 'ADMINISTRADOR')
 def solicitudes_view(request):
     error = None
     evaluations = []
     evaluators = []
     role = current_role(request)
     try:
-        if role in ('GESTOR_IDI', 'ADMINISTRADOR'):
+        if role == 'ADMINISTRADOR':
             users_page = request_api('GET', '/usuarios?page=1&limit=100', token=token(request))
             evaluators = [
                 item for item in users_page.get('data', [])
@@ -338,7 +341,7 @@ def solicitudes_view(request):
         if request.method == 'POST':
             action = request.POST.get('action')
             evaluation_id = request.POST.get('id_solicitud', '')
-            if action == 'assign' and role in ('GESTOR_IDI', 'ADMINISTRADOR'):
+            if action == 'assign' and role == 'ADMINISTRADOR':
                 form = AsignarEvaluadorForm(request.POST, evaluadores=evaluators)
                 if form.is_valid():
                     request_api('PATCH', f'/evaluations/{evaluation_id}/assign', token=token(request), json={
@@ -385,7 +388,7 @@ def solicitudes_view(request):
     })
 
 
-@role_required('ADMINISTRADOR', 'GESTOR_IDI')
+@role_required('ADMINISTRADOR')
 def logs_auditoria(request):
     error = None
     try:
@@ -458,7 +461,7 @@ def usuarios_view(request):
     })
 
 
-@role_required('GESTOR_IDI')
+@role_required('ADMINISTRADOR')
 def configuracion_trl_view(request):
     error = None
     success = False
@@ -486,34 +489,20 @@ def configuracion_trl_view(request):
 def dashboard_view(request):
     error = None
     dashboard = {}
-    projects = []
-    generated_report = None
     try:
-        project_page = request_api('GET', '/projects?page=1&limit=100', token=token(request))
-        projects = project_page.get('data', [])
-        form = ReporteForm(request.POST or None, proyectos=projects)
-        if request.method == 'POST' and form.is_valid():
-            generated_report = request_api('POST', '/management/reports', token=token(request), json={
-                'project_ids': form.cleaned_data['project_ids'],
-            })
-            messages.success(request, 'Reporte PDF generado correctamente.')
         dashboard = request_api('POST', '/management/dashboard', token=token(request))
     except ApiError as exc:
-        form = ReporteForm(request.POST or None, proyectos=projects)
         redirect_response = handle_api_error(request, exc)
         if redirect_response:
             return redirect_response
         error = exc.message
     return render(request, 'management/dashboard.html', {
         'dashboard': dashboard,
-        'proyectos': projects,
-        'form': form,
-        'generated_report': generated_report,
         'error_api': error,
     })
 
 
-@role_required('GESTOR_IDI')
+@role_required('ADMINISTRADOR')
 def descargar_reporte(request, numero):
     try:
         response = download_api(f'/management/reports/{numero}', token(request))

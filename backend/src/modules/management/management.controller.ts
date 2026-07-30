@@ -11,6 +11,7 @@ export class ManagementController {
   constructor(private readonly management: ManagementService) {}
 
   @Post('trl-configurations')
+  @Roles(NombreRol.ADMINISTRADOR)
   configure(@CurrentUser() user: RequestPrincipal, @Body() dto: CreateTrlConfigurationDto) {
     return this.management.configure(user, dto);
   }
@@ -19,11 +20,13 @@ export class ManagementController {
   dashboard(@CurrentUser() user: RequestPrincipal) { return this.management.dashboard(user); }
 
   @Post('reports')
+  @Roles(NombreRol.ADMINISTRADOR)
   report(@CurrentUser() user: RequestPrincipal, @Body() dto: GenerateReportDto) {
     return this.management.generateReport(user, dto);
   }
 
   @Get('reports/:number')
+  @Roles(NombreRol.ADMINISTRADOR)
   async download(@Param('number') number: string, @Res() response: Response): Promise<void> {
     const report = await this.management.downloadReport(number);
     response.setHeader('Content-Type', 'application/pdf');

@@ -11,23 +11,23 @@
   <header class="navbar">
     <div class="navbar-container">
       <div class="navbar-brand-group">
-        <a href="{% url 'listado_proyectos' %}" class="navbar-brand" aria-label="Ir al inicio de Plataforma TRL">
+        <a href="{% if request.session.user.rol == 'GESTOR_IDI' %}{% url 'dashboard' %}{% else %}{% url 'listado_proyectos' %}{% endif %}" class="navbar-brand" aria-label="Ir al inicio de Plataforma TRL">
           <img src="{% static 'img/trl-utpl-logo.png' %}" alt="" class="navbar-logo">
           <span class="navbar-brand-copy"><strong>Plataforma TRL</strong><small>UTPL · Inteligencia I+D+i</small></span>
         </a>
         <span class="role-chip">{{ request.session.user.rol }}</span>
       </div>
       <nav class="navbar-nav" aria-label="Navegación principal">
-        <a href="{% url 'listado_proyectos' %}" class="nav-link">Proyectos</a>
-        <a href="{% url 'solicitudes' %}" class="nav-link">Solicitudes</a>
-        {% if request.session.user.rol == 'ADMINISTRADOR' %}
-          <a href="{% url 'usuarios' %}" class="nav-link">Usuarios</a>
-          <a href="{% url 'create_user' %}" class="nav-link">Crear usuario</a>
-          <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
-        {% elif request.session.user.rol == 'GESTOR_IDI' %}
+        {% if request.session.user.rol == 'GESTOR_IDI' %}
           <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
-          <a href="{% url 'configuracion_trl' %}" class="nav-link">Configuración TRL</a>
-          <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
+        {% else %}
+          <a href="{% url 'listado_proyectos' %}" class="nav-link">Proyectos</a>
+          <a href="{% url 'solicitudes' %}" class="nav-link">Solicitudes</a>
+          {% if request.session.user.rol == 'ADMINISTRADOR' %}
+            <a href="{% url 'usuarios' %}" class="nav-link">Usuarios</a>
+            <a href="{% url 'create_user' %}" class="nav-link">Crear usuario</a>
+            <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
+          {% endif %}
         {% endif %}
         <div class="nav-user">
           <span class="nav-user-name">{{ request.session.user.correo_electronico }}</span>

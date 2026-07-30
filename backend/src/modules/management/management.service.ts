@@ -31,13 +31,28 @@ export class ManagementService {
   }
 
   async dashboard(user: RequestPrincipal) {
+    const totalProjects = await this.projects.count();
+    const projectsWithApprovedTrl = await this.projects.createQueryBuilder('p')
+      .where('p.nivel_trl_actual IS NOT NULL')
+      .getCount();
     const rows = await this.projects.createQueryBuilder('p')
       .leftJoin('p.solicitudes', 's')
       .select("COALESCE(s.estado::text, 'SIN_SOLICITUD')", 'estado')
       .addSelect('COUNT(DISTINCT p.id_proyecto)', 'total')
       .groupBy("COALESCE(s.estado::text, 'SIN_SOLICITUD')")
       .getRawMany<{ estado: string; total: string }>();
-    const statistics = Object.fromEntries(rows.map((row) => [row.estado, Number(row.total)]));
+    const requestStatistics = Object.fromEntries(rows.map((row) => {
+      const label = row.estado === 'SIN_SOLICITUD'
+        ? 'Invenciones sin solicitud'
+        : `Solicitudes ${row.estado.toLocaleLowerCase('es')}`;
+      return [label, Number(row.total)];
+    }));
+    const statistics = {
+      'Total de invenciones': totalProjects,
+      'Con TRL aprobado': projectsWithApprovedTrl,
+      'Sin TRL aprobado': totalProjects - projectsWithApprovedTrl,
+      ...requestStatistics,
+    };
     return this.dashboards.save(this.dashboards.create({
       estadisticas_globales: statistics,
       estados_solicitudes: JSON.stringify(Object.keys(statistics).sort()),

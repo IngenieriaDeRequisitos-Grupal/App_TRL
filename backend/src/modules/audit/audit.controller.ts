@@ -4,7 +4,7 @@ import { Roles } from '../../common/security/security.decorators';
 import { AuditService } from './audit.service';
 
 @Controller('audit')
-@Roles(NombreRol.ADMINISTRADOR, NombreRol.GESTOR_IDI)
+@Roles(NombreRol.ADMINISTRADOR)
 export class AuditController {
   constructor(private readonly audit: AuditService) {}
 

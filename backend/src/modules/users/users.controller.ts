@@ -15,7 +15,6 @@ export class UsersController {
   }
 
   @Get()
-  @Roles(NombreRol.ADMINISTRADOR, NombreRol.GESTOR_IDI)
   list(@CurrentUser() user: RequestPrincipal, @Query() query: ListQueryDto) {
     return this.users.list(user, query);
   }

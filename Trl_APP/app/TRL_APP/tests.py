@@ -58,6 +58,19 @@ class FrontendIntegrationViewsTests(SimpleTestCase):
         self.assertEqual(self.client.session['user']['rol'], 'ADMINISTRADOR')
 
     @patch('TRL_APP.views.request_api')
+    def test_manager_is_redirected_to_dashboard_after_mfa(self, api):
+        self.set_session({'mfa_ticket': 'ticket-seguro-de-prueba'})
+        api.side_effect = [
+            {'access_token': 'jwt-de-prueba'},
+            {'id_usuario': str(uuid4()), 'correo_electronico': 'gestor@trl.local', 'rol': 'GESTOR_IDI'},
+            [{'tipo': 'TERMINOS_USO', 'aceptado': True}, {'tipo': 'AVISO_PRIVACIDAD', 'aceptado': True}],
+        ]
+
+        response = self.client.post(reverse('mfa_verify'), {'codigo': '123456'})
+
+        self.assertRedirects(response, reverse('dashboard'), fetch_redirect_response=False)
+
+    @patch('TRL_APP.views.request_api')
     def test_projects_page_consumes_paginated_backend_response(self, api):
         self.set_session({
             'access_token': 'jwt-de-prueba',
@@ -98,19 +111,20 @@ class FrontendIntegrationViewsTests(SimpleTestCase):
         self.assertContains(response, 'SECRETO-DE-PRUEBA')
 
     @patch('TRL_APP.views.request_api')
-    def test_manager_can_load_assignable_evaluators(self, api):
+    def test_manager_only_accesses_general_metrics_dashboard(self, api):
         self.set_session({
             'access_token': 'jwt-de-prueba',
             'user': {'rol': 'GESTOR_IDI', 'correo_electronico': 'gestor@trl.local'},
         })
-        evaluator_id = str(uuid4())
-        api.side_effect = [
-            {'data': [{'id_usuario': evaluator_id, 'nombre_completo': 'Evaluador', 'correo_electronico': 'evaluador@trl.local', 'rol': 'EVALUADOR', 'estado': 'ACTIVO'}]},
-            [],
-        ]
-        response = self.client.get(reverse('solicitudes'))
+        api.return_value = {'estadisticas_globales': {'TOTAL_INVENCIONES': 3}}
+
+        response = self.client.get(reverse('dashboard'))
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Solicitudes de evaluación')
+        self.assertContains(response, 'Métricas generales')
+        self.assertEqual(api.call_args.args[:2], ('POST', '/management/dashboard'))
+        for route in ('listado_proyectos', 'solicitudes', 'logs_auditoria', 'configuracion_trl'):
+            self.assertEqual(self.client.get(reverse(route)).status_code, 403)
 
     def test_investigator_cannot_open_administrator_users_page(self):
         self.set_session({

@@ -9,7 +9,7 @@ export class EvaluationsController {
   constructor(private readonly evaluations: EvaluationsService) {}
 
   @Get()
-  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR, NombreRol.GESTOR_IDI, NombreRol.ADMINISTRADOR)
+  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR, NombreRol.ADMINISTRADOR)
   list(@CurrentUser() user: RequestPrincipal) { return this.evaluations.list(user); }
 
   @Post()
@@ -27,7 +27,7 @@ export class EvaluationsController {
   submit(@CurrentUser() user: RequestPrincipal, @Param('id', ParseUUIDPipe) id: string) { return this.evaluations.submit(user, id); }
 
   @Patch(':id/assign')
-  @Roles(NombreRol.GESTOR_IDI, NombreRol.ADMINISTRADOR)
+  @Roles(NombreRol.ADMINISTRADOR)
   assign(@Param('id', ParseUUIDPipe) id: string, @Body() dto: AssignEvaluatorDto) { return this.evaluations.assign(id, dto); }
 
   @Post(':id/observations')
