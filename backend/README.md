@@ -13,6 +13,8 @@ Las migraciones se aplican al iniciar. `synchronize` está deshabilitado.
 
 En desarrollo puede habilitarse `MFA_CONSOLE_OUTPUT=true`. Después de un login válido, la consola de la API muestra un código TOTP de 6 dígitos que cambia cada 30 segundos. La aplicación impide esta salida cuando `NODE_ENV=production`.
 
+Si se cambia `POSTGRES_APP_PASSWORD` después de crear el volumen, ejecutar `powershell -ExecutionPolicy Bypass -File .\scripts\sync-db-password.ps1`. El script actualiza el rol sin eliminar datos y recrea la API.
+
 ## Contrato de configuración TRL
 
 El gestor I+D+i publica una matriz versionada con nueve reglas secuenciales:

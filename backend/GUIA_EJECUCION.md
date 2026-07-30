@@ -271,6 +271,18 @@ Si PostgreSQL no está saludable:
 docker compose logs --tail=150 postgres
 ```
 
+Si aparece `password authentication failed for user "trl_app"`, no borres el volumen. Sincroniza la contraseña actual de `.env` con el rol PostgreSQL:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\sync-db-password.ps1
+```
+
+Resultado esperado:
+
+```text
+OK: contraseña de trl_app sincronizada y API conectada a PostgreSQL.
+```
+
 Si el puerto 3000 está ocupado:
 
 ```powershell
