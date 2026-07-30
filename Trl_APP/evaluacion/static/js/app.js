@@ -102,24 +102,45 @@ const app = {
 function renderLogin() {
   return `
     <div class="auth-shell">
-      <div class="hero-card">
-        <div class="hero-badge">UTPL · Innovación y tecnología</div>
-        <div class="hero-icon">🚀</div>
-        <h2 class="hero-title">Portal institucional de evaluación TRL</h2>
-        <p class="hero-subtitle">Gestione solicitudes, evidencias y dictámenes con una experiencia clara, segura y alineada con los estándares de la Universidad Técnica Particular de Loja.</p>
-
-        <div class="role-switcher">
-          <span class="chip act" onclick="selRole('investigator', this)">👨‍🔬 Investigador</span>
-          <span class="chip" onclick="selRole('evaluator', this)">🧑‍⚖️ Evaluador</span>
-          <span class="chip" onclick="selRole('manager', this)">📊 Gestor</span>
+      <div class="hero-card auth-login-card">
+        <div class="hero-top">
+          <div>
+            <div class="hero-badge">UTPL · Evaluación TRL</div>
+            <h2 class="hero-title">Bienvenido al portal TRL</h2>
+            <p class="hero-subtitle">Inicia sesión con tu cuenta institucional y accede al sistema de evaluación desde cualquier dispositivo.</p>
+          </div>
+          <div class="hero-icon">🚀</div>
         </div>
 
-        <div class="card" style="text-align: left; margin-bottom: 0; padding: 22px; border-radius: 18px; box-shadow: none;">
-          <label style="font-size: 11px; font-weight: 800; color: var(--primary-dark); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em;">Correo institucional</label>
-          <input class="inp" id="loginEmail" type="email" value="pedro.yepez@utpl.edu.ec" placeholder="usuario@utpl.edu.ec">
-          <label style="font-size: 11px; font-weight: 800; color: var(--primary-dark); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em;">Contraseña</label>
-          <input class="inp" type="password" value="dummy-password" placeholder="••••••••">
-          <button class="btn" onclick="doLogin()" style="margin-top: 8px; width: 100%;">🔑 Ingresar al sistema</button>
+        <div class="hero-grid">
+          <section class="hero-info">
+            <div class="hero-panel">
+              <h3>Tu espacio de trabajo</h3>
+              <p>Selecciona tu rol y gestiona solicitudes, evidencias y dictámenes con una experiencia clara y accesible.</p>
+              <ul class="hero-features">
+                <li>Roles preconfigurados para cada tipo de usuario</li>
+                <li>Acceso rápido con teclado y ratón</li>
+                <li>Interfaz moderna y responsive</li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="login-panel">
+            <div class="role-switcher" role="group" aria-label="Seleccionar rol de sesión">
+              <button type="button" class="chip act" aria-pressed="true" onclick="selRole('investigator', this)">👨‍🔬 Investigador</button>
+              <button type="button" class="chip" aria-pressed="false" onclick="selRole('evaluator', this)">🧑‍⚖️ Evaluador</button>
+              <button type="button" class="chip" aria-pressed="false" onclick="selRole('manager', this)">📊 Gestor</button>
+            </div>
+
+            <div class="card login-form-card" style="text-align: left; margin-bottom: 0; padding: 22px; border-radius: 18px; box-shadow: none;">
+              <label class="input-label" for="loginEmail">Correo institucional</label>
+              <input class="inp" id="loginEmail" type="email" value="pedro.yepez@utpl.edu.ec" placeholder="usuario@utpl.edu.ec">
+              <label class="input-label" for="loginPassword">Contraseña</label>
+              <input class="inp" id="loginPassword" type="password" value="dummy-password" placeholder="••••••••">
+              <button class="btn full-width" onclick="doLogin()" style="margin-top: 1rem;">🔑 Ingresar al sistema</button>
+              <p class="login-note">Usa tu correo institucional UTPL para iniciar sesión.</p>
+            </div>
+          </section>
         </div>
       </div>
     </div>
@@ -921,8 +942,12 @@ function logout() {
  */
 function selRole(role, el) {
   app.state.selectedRole = role;
-  document.querySelectorAll('.chip').forEach(chip => chip.classList.remove('act'));
+  document.querySelectorAll('.chip').forEach(chip => {
+    chip.classList.remove('act');
+    chip.setAttribute('aria-pressed', 'false');
+  });
   el.classList.add('act');
+  el.setAttribute('aria-pressed', 'true');
 
   const emailInp = document.getElementById('loginEmail');
   if (emailInp) {
