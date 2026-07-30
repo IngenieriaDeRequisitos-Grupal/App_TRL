@@ -7,7 +7,7 @@ API NestJS/TypeORM para la evaluación de madurez tecnológica. La única persis
 1. Copiar `.env.example` a `.env` y reemplazar todos los secretos.
 2. Definir contraseñas distintas en `POSTGRES_ADMIN_PASSWORD` y `POSTGRES_APP_PASSWORD`.
 3. Ejecutar `docker compose up --build`.
-4. Ejecutar una sola vez `docker compose exec api npm run seed` con las variables `SEED_ADMIN_*` definidas, y retirarlas después.
+4. Ejecutar una sola vez `docker compose exec -e SEED_ADMIN_NAME=... -e SEED_ADMIN_CEDULA=... -e SEED_ADMIN_EMAIL=... -e SEED_ADMIN_PASSWORD=... api npm run seed`, guardar el secreto MFA mostrado y retirar esas variables después.
 
 Las migraciones se aplican al iniciar. `synchronize` está deshabilitado.
 

@@ -12,6 +12,7 @@ import {
   OneToOne,
   PrimaryColumn,
   PrimaryGeneratedColumn,
+  Relation,
   TableInheritance,
   UpdateDateColumn,
 } from 'typeorm';
@@ -38,7 +39,7 @@ export class Rol {
   nivel_privilegio: string;
 
   @OneToMany(() => Usuario, (usuario) => usuario.rol)
-  usuarios: Usuario[];
+  usuarios: Relation<Usuario[]>;
 }
 
 @Entity('usuarios')
@@ -79,10 +80,10 @@ export abstract class Usuario {
 
   @ManyToOne(() => Rol, (rol) => rol.usuarios, { eager: true, onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_rol' })
-  rol: Rol;
+  rol: Relation<Rol>;
 
   @OneToOne(() => Sesion, (sesion) => sesion.usuario)
-  sesion: Sesion;
+  sesion: Relation<Sesion>;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fecha_creacion: Date;
@@ -97,31 +98,31 @@ export class Administrador extends Usuario {}
 @ChildEntity(NombreRol.INVESTIGADOR)
 export class Investigador extends Usuario {
   @OneToMany(() => ProyectoInvencion, (proyecto) => proyecto.investigador)
-  proyectos: ProyectoInvencion[];
+  proyectos: Relation<ProyectoInvencion[]>;
 
   @OneToMany(() => Observacion, (observacion) => observacion.investigador)
-  observaciones: Observacion[];
+  observaciones: Relation<Observacion[]>;
 }
 
 @ChildEntity(NombreRol.EVALUADOR)
 export class Evaluador extends Usuario {
-  @Column({ name: 'especialidad_tecnica', length: 120, nullable: true })
+  @Column({ name: 'especialidad_tecnica', type: 'varchar', length: 120, nullable: true })
   especialidad_tecnica: string | null;
 
-  @Column({ name: 'departamento_evaluador', length: 120, nullable: true })
+  @Column({ name: 'departamento_evaluador', type: 'varchar', length: 120, nullable: true })
   departamento: string | null;
 
   @OneToMany(() => SolicitudEvaluacion, (solicitud) => solicitud.evaluador)
-  solicitudes: SolicitudEvaluacion[];
+  solicitudes: Relation<SolicitudEvaluacion[]>;
 }
 
 @ChildEntity(NombreRol.GESTOR_IDI)
 export class GestorIdi extends Usuario {
-  @Column({ name: 'departamento_gestor', length: 120, nullable: true })
+  @Column({ name: 'departamento_gestor', type: 'varchar', length: 120, nullable: true })
   departamento: string | null;
 
   @OneToMany(() => ConfiguracionTrl, (configuracion) => configuracion.gestor)
-  configuraciones: ConfiguracionTrl[];
+  configuraciones: Relation<ConfiguracionTrl[]>;
 }
 
 @Entity('sesiones')
@@ -130,10 +131,10 @@ export class Sesion {
   id_sesion: string;
 
   // SECURITY: el atributo del diagrama conserva su nombre, pero almacena SHA-256 del JWT, nunca el bearer token.
-  @Column({ name: 'token_jwt', length: 64, nullable: true, select: false })
+  @Column({ name: 'token_jwt', type: 'varchar', length: 64, nullable: true, select: false })
   token_jwt: string | null;
 
-  @Column({ name: 'direccion_ip', length: 64, nullable: true, select: false })
+  @Column({ name: 'direccion_ip', type: 'varchar', length: 64, nullable: true, select: false })
   direccion_ip: string | null;
 
   @Column({ name: 'fecha_expiracion', type: 'timestamptz', nullable: true })
@@ -144,10 +145,10 @@ export class Sesion {
 
   @OneToOne(() => Usuario, (usuario) => usuario.sesion, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_usuario' })
-  usuario: Usuario;
+  usuario: Relation<Usuario>;
 
   @OneToOne(() => Mfa, (mfa) => mfa.sesion, { cascade: true })
-  mfa: Mfa;
+  mfa: Relation<Mfa>;
 }
 
 @Entity('mfa')
@@ -167,7 +168,7 @@ export class Mfa {
 
   @OneToOne(() => Sesion, (sesion) => sesion.mfa, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_sesion' })
-  sesion: Sesion;
+  sesion: Relation<Sesion>;
 }
 
 @Entity('servicios_nube')
@@ -185,7 +186,7 @@ export class ServicioNube {
   estado_microservicio: string;
 
   @OneToMany(() => ProyectoInvencion, (proyecto) => proyecto.servicio_persistencia)
-  proyectos: ProyectoInvencion[];
+  proyectos: Relation<ProyectoInvencion[]>;
 }
 
 @Entity('proyectos_invencion')
@@ -207,20 +208,20 @@ export class ProyectoInvencion {
 
   @ManyToOne(() => Investigador, (investigador) => investigador.proyectos, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_investigador' })
-  investigador: Investigador;
+  investigador: Relation<Investigador>;
 
   @ManyToOne(() => ServicioNube, (servicio) => servicio.proyectos, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'id_servidor' })
-  servicio_persistencia: ServicioNube | null;
+  servicio_persistencia: Relation<ServicioNube> | null;
 
   @OneToMany(() => SolicitudEvaluacion, (solicitud) => solicitud.proyecto)
-  solicitudes: SolicitudEvaluacion[];
+  solicitudes: Relation<SolicitudEvaluacion[]>;
 
   @ManyToMany(() => Reporte, (reporte) => reporte.proyectos)
-  reportes: Reporte[];
+  reportes: Relation<Reporte[]>;
 }
 
 @Entity('solicitudes_evaluacion')
@@ -236,26 +237,26 @@ export class SolicitudEvaluacion {
 
   @ManyToOne(() => ProyectoInvencion, (proyecto) => proyecto.solicitudes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_proyecto' })
-  proyecto: ProyectoInvencion;
+  proyecto: Relation<ProyectoInvencion>;
 
   @ManyToOne(() => Evaluador, (evaluador) => evaluador.solicitudes, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'id_evaluador' })
-  evaluador: Evaluador | null;
+  evaluador: Relation<Evaluador> | null;
 
   @OneToOne(() => Cuestionario, (cuestionario) => cuestionario.solicitud)
-  cuestionario: Cuestionario;
+  cuestionario: Relation<Cuestionario>;
 
   @OneToOne(() => NivelTrl, (nivel) => nivel.solicitud)
-  nivel: NivelTrl;
+  nivel: Relation<NivelTrl>;
 
   @OneToMany(() => Observacion, (observacion) => observacion.solicitud)
-  observaciones: Observacion[];
+  observaciones: Relation<Observacion[]>;
 
   @OneToOne(() => CalificacionFinal, (calificacion) => calificacion.solicitud)
-  calificacion: CalificacionFinal;
+  calificacion: Relation<CalificacionFinal>;
 }
 
 @Entity('configuraciones_trl')
@@ -274,13 +275,13 @@ export class ConfiguracionTrl {
 
   @ManyToOne(() => GestorIdi, (gestor) => gestor.configuraciones, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_gestor' })
-  gestor: GestorIdi;
+  gestor: Relation<GestorIdi>;
 
   @CreateDateColumn({ name: 'fecha_creacion' })
   fecha_creacion: Date;
 
   @OneToMany(() => Cuestionario, (cuestionario) => cuestionario.configuracion)
-  cuestionarios: Cuestionario[];
+  cuestionarios: Relation<Cuestionario[]>;
 }
 
 @Entity('cuestionarios')
@@ -296,16 +297,16 @@ export class Cuestionario {
 
   @OneToOne(() => SolicitudEvaluacion, (solicitud) => solicitud.cuestionario, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_solicitud' })
-  solicitud: SolicitudEvaluacion;
+  solicitud: Relation<SolicitudEvaluacion>;
 
   @ManyToOne(() => ConfiguracionTrl, (configuracion) => configuracion.cuestionarios, {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'id_configuracion' })
-  configuracion: ConfiguracionTrl;
+  configuracion: Relation<ConfiguracionTrl>;
 
   @OneToMany(() => DocumentoAdjunto, (documento) => documento.cuestionario)
-  documentos: DocumentoAdjunto[];
+  documentos: Relation<DocumentoAdjunto[]>;
 }
 
 @Entity('niveles_trl')
@@ -318,7 +319,7 @@ export class NivelTrl {
 
   @OneToOne(() => SolicitudEvaluacion, (solicitud) => solicitud.nivel, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_solicitud' })
-  solicitud: SolicitudEvaluacion;
+  solicitud: Relation<SolicitudEvaluacion>;
 }
 
 @Entity('documentos_adjuntos')
@@ -350,7 +351,7 @@ export class DocumentoAdjunto {
 
   @ManyToOne(() => Cuestionario, (cuestionario) => cuestionario.documentos, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_cuestionario' })
-  cuestionario: Cuestionario;
+  cuestionario: Relation<Cuestionario>;
 }
 
 @Entity('observaciones')
@@ -369,15 +370,15 @@ export class Observacion {
 
   @ManyToOne(() => SolicitudEvaluacion, (solicitud) => solicitud.observaciones, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_solicitud' })
-  solicitud: SolicitudEvaluacion;
+  solicitud: Relation<SolicitudEvaluacion>;
 
   @ManyToOne(() => Evaluador, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_evaluador' })
-  evaluador: Evaluador;
+  evaluador: Relation<Evaluador>;
 
   @ManyToOne(() => Investigador, (investigador) => investigador.observaciones, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_investigador' })
-  investigador: Investigador;
+  investigador: Relation<Investigador>;
 }
 
 @Entity('calificaciones_finales')
@@ -396,11 +397,11 @@ export class CalificacionFinal {
 
   @OneToOne(() => SolicitudEvaluacion, (solicitud) => solicitud.calificacion, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_solicitud' })
-  solicitud: SolicitudEvaluacion;
+  solicitud: Relation<SolicitudEvaluacion>;
 
   @ManyToOne(() => Evaluador, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_evaluador' })
-  evaluador: Evaluador;
+  evaluador: Relation<Evaluador>;
 }
 
 @Entity('dashboards')
@@ -416,7 +417,7 @@ export class Dashboard {
 
   @ManyToOne(() => GestorIdi, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_gestor' })
-  gestor: GestorIdi;
+  gestor: Relation<GestorIdi>;
 
   @CreateDateColumn({ name: 'fecha_generacion' })
   fecha_generacion: Date;
@@ -438,7 +439,7 @@ export class Reporte {
 
   @ManyToOne(() => GestorIdi, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'id_gestor' })
-  gestor: GestorIdi;
+  gestor: Relation<GestorIdi>;
 
   @ManyToMany(() => ProyectoInvencion, (proyecto) => proyecto.reportes)
   @JoinTable({
@@ -446,7 +447,7 @@ export class Reporte {
     joinColumn: { name: 'numero_reporte', referencedColumnName: 'numero_reporte' },
     inverseJoinColumn: { name: 'id_proyecto', referencedColumnName: 'id_proyecto' },
   })
-  proyectos: ProyectoInvencion[];
+  proyectos: Relation<ProyectoInvencion[]>;
 }
 
 @Entity('consentimientos')
@@ -456,7 +457,7 @@ export class Consentimiento {
 
   @ManyToOne(() => Usuario, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_usuario' })
-  usuario: Usuario;
+  usuario: Relation<Usuario>;
 
   @Column({ name: 'tipo', type: 'enum', enum: TipoConsentimiento })
   tipo: TipoConsentimiento;
@@ -503,7 +504,7 @@ export class EventoAuditoria {
   @Column({ name: 'correlation_id', length: 80 })
   correlation_id: string;
 
-  @Column({ name: 'ip_hash', length: 64, nullable: true })
+  @Column({ name: 'ip_hash', type: 'varchar', length: 64, nullable: true })
   ip_hash: string | null;
 
   @CreateDateColumn({ name: 'fecha_evento' })
