@@ -1,51 +1,25 @@
 {% extends 'master.html' %}
-
+{% block title %}Proyectos | TRL UTPL{% endblock %}
 {% block contenido %}
-<div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
-  <div>
-    <h1 style="margin-bottom: 0.25rem;">Portafolio de Invenciones</h1>
-    <p style="color: var(--text-muted); margin: 0;">Gestión de madurez tecnológica de proyectos UTPL.</p>
-  </div>
-  <button type="button" class="btn btn-primary">+ Registrar Proyecto</button>
+<div class="page-header">
+  <div><h1>Portafolio de invenciones</h1><p class="text-muted">Proyectos disponibles según su rol.</p></div>
+  {% if request.session.user.rol == 'INVESTIGADOR' %}<a href="{% url 'crear_proyecto' %}" class="btn btn-primary">+ Registrar proyecto</a>{% endif %}
 </div>
-
+{% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
 <section class="grid-cards">
-  <!-- Tarjeta de Proyecto 1 -->
-  <article class="card">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-      <h2 style="font-size: 1.15rem; margin: 0; color: var(--primary);">Sistema de Asistencia QR</h2>
-      <span class="badge badge-success">Aprobado</span>
-    </div>
-    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Investigador: Juan Pérez</p>
-    
-    <div style="background-color: var(--bg-body); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
-      <p style="margin: 0; font-size: 0.875rem;">Nivel Actual</p>
-      <p style="margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main);">TRL 4</p>
-    </div>
-    
-    <div style="display: flex; gap: 0.75rem;">
-      <a href="{% url 'tabla_evidencias' 1 %}" class="btn btn-secondary" style="flex: 1; font-size: 0.875rem;">Evidencias</a>
-      <a href="{% url 'evaluar_trl' 1 %}" class="btn btn-warning" style="flex: 1; font-size: 0.875rem;">Evaluar</a>
-    </div>
-  </article>
-
-  <!-- Tarjeta de Proyecto 2 -->
-  <article class="card">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-      <h2 style="font-size: 1.15rem; margin: 0; color: var(--primary);">Plataforma Multibanco</h2>
-      <span class="badge badge-warning">En Revisión</span>
-    </div>
-    <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Investigador: María López</p>
-    
-    <div style="background-color: var(--bg-body); padding: 1rem; border-radius: 6px; margin-bottom: 1.5rem;">
-      <p style="margin: 0; font-size: 0.875rem;">Nivel Actual</p>
-      <p style="margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main);">TRL 2</p>
-    </div>
-    
-    <div style="display: flex; gap: 0.75rem;">
-      <a href="{% url 'tabla_evidencias' 2 %}" class="btn btn-secondary" style="flex: 1; font-size: 0.875rem;">Evidencias</a>
-      <a href="{% url 'evaluar_trl' 2 %}" class="btn btn-warning" style="flex: 1; font-size: 0.875rem;">Evaluar</a>
-    </div>
-  </article>
+  {% for proyecto in proyectos %}
+    <article class="card">
+      <h2>{{ proyecto.titulo_tecnologia }}</h2>
+      <p class="text-muted">{{ proyecto.rama_innovacion }}</p>
+      <p><strong>Nivel actual:</strong> {% if proyecto.nivel_trl_actual %}TRL {{ proyecto.nivel_trl_actual }}{% else %}Sin evaluar{% endif %}</p>
+      {% if proyecto.evaluacion %}<p><span class="badge badge-warning">{{ proyecto.evaluacion.estado }}</span></p>{% endif %}
+      <div class="button-row">
+        {% if request.session.user.rol == 'INVESTIGADOR' %}<a href="{% url 'evaluar_trl' proyecto.id_proyecto %}" class="btn btn-primary">Cuestionario</a>{% endif %}
+        {% if request.session.user.rol != 'ADMINISTRADOR' %}<a href="{% url 'tabla_evidencias' proyecto.id_proyecto %}" class="btn btn-secondary">Evidencias</a>{% endif %}
+      </div>
+    </article>
+  {% empty %}
+    <article class="card"><p>No existen proyectos para mostrar.</p></article>
+  {% endfor %}
 </section>
 {% endblock %}

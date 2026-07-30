@@ -1,26 +1,24 @@
-{% extends "base.html" %}
-
-{% block content %}
-<div class="container" style="max-width: 480px;">
-    <h2>Verificación de Dos Pasos</h2>
-    <p>Abra su aplicación de autenticación (ej. Google Authenticator) e ingrese el código para continuar.</p>
-
-    <div class="card">
-        <form method="post">
-            {% csrf_token %}
-            {{ form.mfa_ticket }}
-
-            <div class="form-group">
-                {{ form.codigo.label_tag }}
-                {{ form.codigo }}
-            </div>
-
-            {% if error %}
-                <p class="form-text-error">{{ error }}</p>
-            {% endif %}
-
-            <button type="submit" class="btn btn-primary" style="width: 100%;">Verificar e Ingresar</button>
-        </form>
-    </div>
-</div>
-{% endblock %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verificación MFA | TRL UTPL</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+  <main class="login-wrapper">
+    <section class="card login-card">
+      <h1>Verificación MFA</h1>
+      <p class="text-muted">Ingrese el código temporal de seis dígitos.</p>
+      {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="form-group">{{ form.codigo.label_tag }}{{ form.codigo }}{{ form.codigo.errors }}</div>
+        <button type="submit" class="btn btn-primary full-width">Verificar</button>
+      </form>
+    </section>
+  </main>
+</body>
+</html>

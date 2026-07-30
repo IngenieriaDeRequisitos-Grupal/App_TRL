@@ -49,14 +49,43 @@ export class EvaluationsService {
       const request = await manager.getRepository(SolicitudEvaluacion).save(
         manager.getRepository(SolicitudEvaluacion).create({ proyecto: project, estado: EstadoSolicitud.BORRADOR }),
       );
-      await manager.getRepository(Cuestionario).save(manager.getRepository(Cuestionario).create({
+      const questionnaire = await manager.getRepository(Cuestionario).save(manager.getRepository(Cuestionario).create({
         solicitud: request,
         configuracion: config,
         respuestas_json: {},
         estado_progreso: EstadoProgreso.NO_INICIADO,
       }));
-      return request;
+      return Object.assign(request, { cuestionario: questionnaire });
     });
+  }
+
+  async list(user: RequestPrincipal) {
+    const builder = this.requests.createQueryBuilder('s')
+      .leftJoinAndSelect('s.proyecto', 'p')
+      .leftJoinAndSelect('p.investigador', 'i')
+      .leftJoinAndSelect('s.evaluador', 'e')
+      .leftJoinAndSelect('s.cuestionario', 'q')
+      .leftJoinAndSelect('s.nivel', 'n')
+      .orderBy('s.fecha_envio', 'DESC');
+    if (user.rol === NombreRol.INVESTIGADOR) {
+      builder.where('i.id_usuario = :userId', { userId: user.id_usuario });
+    } else if (user.rol === NombreRol.EVALUADOR) {
+      builder.where('e.id_usuario = :userId', { userId: user.id_usuario });
+    }
+    const requests = await builder.getMany();
+    return requests.map((request) => ({
+      id_solicitud: request.id_solicitud,
+      fecha_envio: request.fecha_envio,
+      estado: request.estado,
+      proyecto: {
+        id_proyecto: request.proyecto.id_proyecto,
+        titulo_tecnologia: request.proyecto.titulo_tecnologia,
+        rama_innovacion: request.proyecto.rama_innovacion,
+      },
+      id_evaluador: request.evaluador?.id_usuario ?? null,
+      id_cuestionario: request.cuestionario?.id_cuestionario ?? null,
+      nivel_estimado: request.nivel?.valor_estimado ?? null,
+    }));
   }
 
   async saveAnswers(user: RequestPrincipal, requestId: string, dto: SaveAnswersDto) {

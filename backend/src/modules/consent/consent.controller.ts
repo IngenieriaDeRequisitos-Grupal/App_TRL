@@ -18,6 +18,11 @@ export class ConsentController {
     return this.consent.current();
   }
 
+  @Get('status')
+  status(@CurrentUser() user: RequestPrincipal) {
+    return this.consent.status(user.id_usuario);
+  }
+
   @Post('events')
   register(
     @CurrentUser() user: RequestPrincipal,

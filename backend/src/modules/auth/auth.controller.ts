@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
 import {
@@ -26,6 +26,12 @@ export class AuthController {
   @Post('mfa/verify')
   verifyMfa(@Body() dto: VerifyMfaDto, @Req() request: Request) {
     return this.auth.verifyMfa(dto, request.ip || request.socket.remoteAddress || 'unknown');
+  }
+
+  @ConsentNotRequired()
+  @Get('me')
+  me(@CurrentUser() user: RequestPrincipal) {
+    return user;
   }
 
   @ConsentNotRequired()

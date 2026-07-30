@@ -4,77 +4,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | TRL-UTPL</title>
+  <title>{% block title %}TRL UTPL{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  <style>
-    /* Estilos de la barra de navegación corporativa */
-    .navbar {
-      background-color: var(--primary);
-      color: white;
-      padding: 0 1.5rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .navbar-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 64px;
-    }
-    .navbar-brand {
-      font-weight: 700;
-      font-size: 1.25rem;
-      text-decoration: none;
-      color: white;
-    }
-    .navbar-nav {
-      display: flex;
-      gap: 1.5rem;
-      align-items: center;
-    }
-    .nav-link {
-      color: var(--primary-soft);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 0.95rem;
-      transition: color 0.2s;
-    }
-    .nav-link:hover, .nav-link.active {
-      color: white;
-    }
-    .nav-user {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      border-left: 1px solid rgba(255,255,255,0.2);
-      padding-left: 1.5rem;
-    }
-  </style>
 </head>
 <body>
-  
   <header class="navbar">
     <div class="navbar-container">
       <a href="{% url 'listado_proyectos' %}" class="navbar-brand">TRL Assessment</a>
-      
       <nav class="navbar-nav">
         <a href="{% url 'listado_proyectos' %}" class="nav-link">Proyectos</a>
-        <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
-        <a href="{% url 'create_user' %}" class="nav-link">Crear Usuario</a>
-        
-        <div class="nav-user">
-          <span style="font-size: 0.875rem;">Steven Benavides</span>
-          <a href="{% url 'logout' %}" class="btn btn-warning" style="min-height: 32px; padding: 0 1rem; font-size: 0.875rem;">Salir</a>
-        </div>
+        {% if request.session.user.rol == 'ADMINISTRADOR' %}
+          <a href="{% url 'create_user' %}" class="nav-link">Crear usuario</a>
+          <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
+        {% elif request.session.user.rol == 'GESTOR_IDI' %}
+          <a href="{% url 'configuracion_trl' %}" class="nav-link">Configuración TRL</a>
+          <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
+        {% endif %}
+        <span class="nav-user">{{ request.session.user.correo_electronico }} · {{ request.session.user.rol }}</span>
+        <a href="{% url 'logout' %}" class="btn btn-warning">Salir</a>
       </nav>
     </div>
   </header>
-
   <main class="container">
-    {% block contenido %}
-    {% endblock %}
+    {% block contenido %}{% endblock %}
   </main>
-
 </body>
 </html>

@@ -65,6 +65,34 @@ export class EvidenceService {
     return { filename: document.nombre_archivo, mimeType: 'application/pdf', bytes };
   }
 
+  async listByProject(user: RequestPrincipal, projectId: string) {
+    const documents = await this.documents.createQueryBuilder('d')
+      .leftJoinAndSelect('d.cuestionario', 'q')
+      .leftJoinAndSelect('q.solicitud', 's')
+      .leftJoinAndSelect('s.proyecto', 'p')
+      .leftJoinAndSelect('p.investigador', 'i')
+      .leftJoinAndSelect('s.evaluador', 'e')
+      .where('p.id_proyecto = :projectId', { projectId })
+      .orderBy('d.fecha_carga', 'DESC')
+      .getMany();
+    if (documents.length > 0) {
+      const request = documents[0]?.cuestionario.solicitud;
+      const allowed = request?.proyecto.investigador.id_usuario === user.id_usuario
+        || request?.evaluador?.id_usuario === user.id_usuario
+        || user.rol === NombreRol.GESTOR_IDI;
+      if (!allowed) throw new ForbiddenException('Acceso denegado a las evidencias');
+    }
+    return documents.map((document) => ({
+      id_documento: document.id_documento,
+      nombre_archivo: document.nombre_archivo,
+      tipo_formato: document.tipo_formato,
+      tamano_bytes: document.tamano_bytes,
+      sha256: document.sha256,
+      fecha_carga: document.fecha_carga,
+      id_cuestionario: document.cuestionario.id_cuestionario,
+    }));
+  }
+
   private validatePdf(file: Express.Multer.File): void {
     const max = Number(this.config.get('MAX_EVIDENCE_BYTES') ?? 10 * 1024 * 1024);
     if (file.size < 5 || file.size > max || file.mimetype !== 'application/pdf' || file.buffer.subarray(0, 5).toString() !== '%PDF-') {

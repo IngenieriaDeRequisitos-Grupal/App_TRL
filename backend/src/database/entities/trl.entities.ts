@@ -39,60 +39,7 @@ export class Rol {
   nivel_privilegio: string;
 
   @OneToMany(() => Usuario, (usuario) => usuario.rol)
-<<<<<<< HEAD
-  usuarios: any[];
-}
-
-@Entity('sesiones')
-export class Sesion {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_sesion' })
-  id_sesion: string;
-
-  // SECURITY: el atributo del diagrama conserva su nombre, pero almacena SHA-256 del JWT, nunca el bearer token.
-  @Column({ name: 'token_jwt', length: 64, nullable: true, select: false })
-  token_jwt: string | null;
-
-  @Column({ name: 'direccion_ip', length: 64, nullable: true, select: false })
-  direccion_ip: string | null;
-
-  @Column({ name: 'fecha_expiracion', type: 'timestamptz', nullable: true })
-  fecha_expiracion: Date | null;
-
-  @Column({ name: 'revocada', default: true })
-  revocada: boolean;
-
-  @OneToOne(() => Usuario, (usuario) => usuario.sesion, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'id_usuario' })
-  // The type is set to 'any' to break the circular dependency for TypeScript's metadata emitter.
-  // TypeORM still knows the correct type ('Usuario') because of the arrow function in the decorator.
-  usuario: any;
-
-  @OneToOne(() => Mfa, (mfa) => mfa.sesion, { cascade: true })
-  // The type is set to 'any' because Mfa is defined after Sesion in the file.
-  mfa: any;
-}
-
-@Entity('mfa')
-export class Mfa {
-  @PrimaryGeneratedColumn('uuid', { name: 'id_mfa' })
-  id_mfa: string;
-
-  // SECURITY: codigo_totp contiene el secreto TOTP cifrado con AES-256-GCM y nunca se selecciona por defecto.
-  @Column({ name: 'codigo_totp', type: 'text', select: false })
-  codigo_totp: string;
-
-  @Column({ name: 'fecha_emision', type: 'timestamptz' })
-  fecha_emision: Date;
-
-  @Column({ name: 'intentos_fallidos', type: 'integer', default: 0 })
-  intentos_fallidos: number;
-
-  @OneToOne(() => Sesion, (sesion) => sesion.mfa, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'id_sesion' })
-  sesion: Sesion;
-=======
   usuarios: Relation<Usuario[]>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @Entity('usuarios')
@@ -151,17 +98,10 @@ export class Administrador extends Usuario {}
 @ChildEntity(NombreRol.INVESTIGADOR)
 export class Investigador extends Usuario {
   @OneToMany(() => ProyectoInvencion, (proyecto) => proyecto.investigador)
-<<<<<<< HEAD
-  proyectos: any[];
-
-  @OneToMany(() => Observacion, (observacion) => observacion.investigador)
-  observaciones: any[];
-=======
   proyectos: Relation<ProyectoInvencion[]>;
 
   @OneToMany(() => Observacion, (observacion) => observacion.investigador)
   observaciones: Relation<Observacion[]>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @ChildEntity(NombreRol.EVALUADOR)
@@ -173,11 +113,7 @@ export class Evaluador extends Usuario {
   departamento: string | null;
 
   @OneToMany(() => SolicitudEvaluacion, (solicitud) => solicitud.evaluador)
-<<<<<<< HEAD
-  solicitudes: any[];
-=======
   solicitudes: Relation<SolicitudEvaluacion[]>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @ChildEntity(NombreRol.GESTOR_IDI)
@@ -186,9 +122,6 @@ export class GestorIdi extends Usuario {
   departamento: string | null;
 
   @OneToMany(() => ConfiguracionTrl, (configuracion) => configuracion.gestor)
-<<<<<<< HEAD
-  configuraciones: any[];
-=======
   configuraciones: Relation<ConfiguracionTrl[]>;
 }
 
@@ -236,7 +169,6 @@ export class Mfa {
   @OneToOne(() => Sesion, (sesion) => sesion.mfa, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'id_sesion' })
   sesion: Relation<Sesion>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @Entity('servicios_nube')
@@ -254,11 +186,7 @@ export class ServicioNube {
   estado_microservicio: string;
 
   @OneToMany(() => ProyectoInvencion, (proyecto) => proyecto.servicio_persistencia)
-<<<<<<< HEAD
-  proyectos: any[];
-=======
   proyectos: Relation<ProyectoInvencion[]>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @Entity('proyectos_invencion')
@@ -290,17 +218,10 @@ export class ProyectoInvencion {
   servicio_persistencia: Relation<ServicioNube> | null;
 
   @OneToMany(() => SolicitudEvaluacion, (solicitud) => solicitud.proyecto)
-<<<<<<< HEAD
-  solicitudes: any[];
-
-  @ManyToMany(() => Reporte, (reporte) => reporte.proyectos)
-  reportes: any[];
-=======
   solicitudes: Relation<SolicitudEvaluacion[]>;
 
   @ManyToMany(() => Reporte, (reporte) => reporte.proyectos)
   reportes: Relation<Reporte[]>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @Entity('solicitudes_evaluacion')
@@ -326,21 +247,6 @@ export class SolicitudEvaluacion {
   evaluador: Relation<Evaluador> | null;
 
   @OneToOne(() => Cuestionario, (cuestionario) => cuestionario.solicitud)
-<<<<<<< HEAD
-  // The type is set to 'any' to break the circular dependency for TypeScript's metadata emitter.
-  // TypeORM still knows the correct type ('Cuestionario') because of the arrow function in the decorator.
-  cuestionario: any;
-
-  @OneToOne(() => NivelTrl, (nivel) => nivel.solicitud)
-  // The type is set to 'any' because NivelTrl is defined after SolicitudEvaluacion in the file.
-  nivel: any;
-
-  @OneToMany(() => Observacion, (observacion) => observacion.solicitud)
-  observaciones: any[];
-
-  @OneToOne(() => CalificacionFinal, (calificacion) => calificacion.solicitud)
-  calificacion: any;
-=======
   cuestionario: Relation<Cuestionario>;
 
   @OneToOne(() => NivelTrl, (nivel) => nivel.solicitud)
@@ -351,7 +257,6 @@ export class SolicitudEvaluacion {
 
   @OneToOne(() => CalificacionFinal, (calificacion) => calificacion.solicitud)
   calificacion: Relation<CalificacionFinal>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @Entity('configuraciones_trl')
@@ -376,11 +281,7 @@ export class ConfiguracionTrl {
   fecha_creacion: Date;
 
   @OneToMany(() => Cuestionario, (cuestionario) => cuestionario.configuracion)
-<<<<<<< HEAD
-  cuestionarios: any[];
-=======
   cuestionarios: Relation<Cuestionario[]>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @Entity('cuestionarios')
@@ -405,11 +306,7 @@ export class Cuestionario {
   configuracion: Relation<ConfiguracionTrl>;
 
   @OneToMany(() => DocumentoAdjunto, (documento) => documento.cuestionario)
-<<<<<<< HEAD
-  documentos: any[];
-=======
   documentos: Relation<DocumentoAdjunto[]>;
->>>>>>> fa98d0c8490d6fbfd56dbad82e1f252124679573
 }
 
 @Entity('niveles_trl')

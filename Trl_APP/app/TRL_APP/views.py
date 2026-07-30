@@ -1,204 +1,274 @@
-import requests
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from .forms import CreateUserForm, EvaluacionTRLForm, LoginForm, MfaForm, ProyectoForm
+from functools import wraps
 
-NESTJS_API_URL = "http://localhost:3000/api"
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
 
-# ==============================================================================
-# HELPERS Y DECORADORES DE AUTENTICACIÓN
-# ==============================================================================
+from .api import ApiError, download_api, request_api
+from .forms import (
+    ConfiguracionTrlForm,
+    CreateUserForm,
+    EvaluacionTRLForm,
+    LoginForm,
+    MfaForm,
+    ProyectoForm,
+)
+
 
 def is_authenticated(request):
-    """Verifica si hay un token de acceso en la sesión."""
-    return 'access_token' in request.session
+    return bool(request.session.get('access_token'))
+
 
 def auth_required(view_func):
-    """Decorador para proteger vistas que requieren autenticación."""
+    @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not is_authenticated(request):
             return redirect('login')
         return view_func(request, *args, **kwargs)
     return wrapper
 
-def get_auth_headers(request):
-    """Construye los encabezados de autorización para las peticiones a la API."""
-    token = request.session.get('access_token')
-    return {'Authorization': f'Bearer {token}'} if token else {}
 
-# ==============================================================================
-# VISTAS DE AUTENTICACIÓN (AUTH)
-# ==============================================================================
+def token(request):
+    return request.session.get('access_token', '')
+
+
+def handle_api_error(request, error):
+    if error.status == 401:
+        request.session.flush()
+        return redirect('login')
+    if error.code == 'LEGAL_ACCEPTANCE_REQUIRED':
+        return redirect('consentimiento')
+    return None
+
 
 def login_view(request):
     if is_authenticated(request):
         return redirect('listado_proyectos')
-
     error = None
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            payload = form.cleaned_data
-            try:
-                response = requests.post(f"{NESTJS_API_URL}/auth/login", json=payload, timeout=5)
-                if response.status_code == 201:
-                    # El backend devolvió un ticket MFA, redirigimos al usuario para que ingrese el código.
-                    mfa_ticket = response.json().get('mfa_ticket')
-                    return redirect(f"{reverse('mfa_verify')}?ticket={mfa_ticket}")
-                else:
-                    error = response.json().get('message', 'Credenciales inválidas.')
-            except requests.exceptions.RequestException:
-                error = "Error de conexión con el servidor de autenticación."
-    else:
-        form = LoginForm()
-
+    form = LoginForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        try:
+            result = request_api('POST', '/auth/login', json=form.cleaned_data)
+            request.session['mfa_ticket'] = result['mfa_ticket']
+            return redirect('mfa_verify')
+        except ApiError as exc:
+            error = exc.message
     return render(request, 'auth/login.html', {'form': form, 'error': error})
 
-def mfa_verify_view(request):
-    error = None
-    ticket = request.GET.get('ticket')
 
+def mfa_verify_view(request):
+    ticket = request.session.get('mfa_ticket')
     if not ticket:
         return redirect('login')
-
-    if request.method == 'POST':
-        form = MfaForm(request.POST)
-        if form.is_valid():
-            payload = form.cleaned_data
-            try:
-                response = requests.post(f"{NESTJS_API_URL}/auth/mfa/verify", json=payload, timeout=5)
-                if response.status_code == 201:
-                    # ¡Autenticación exitosa! Guardamos el token en la sesión.
-                    request.session['access_token'] = response.json().get('access_token')
-                    return redirect('listado_proyectos')
-                else:
-                    error = response.json().get('message', 'Código MFA inválido o el ticket ha expirado.')
-            except requests.exceptions.RequestException:
-                error = "Error de conexión con el servidor de autenticación."
-    else:
-        form = MfaForm(initial={'mfa_ticket': ticket})
-
+    error = None
+    form = MfaForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        try:
+            result = request_api('POST', '/auth/mfa/verify', json={
+                'mfa_ticket': ticket,
+                'codigo': form.cleaned_data['codigo'],
+            })
+            request.session.cycle_key()
+            request.session['access_token'] = result['access_token']
+            request.session.pop('mfa_ticket', None)
+            request.session['user'] = request_api('GET', '/auth/me', token=result['access_token'])
+            legal = request_api('GET', '/legal/status', token=result['access_token'])
+            return redirect('consentimiento' if any(not item['aceptado'] for item in legal) else 'listado_proyectos')
+        except ApiError as exc:
+            error = exc.message
     return render(request, 'auth/mfa_verify.html', {'form': form, 'error': error})
+
+
+@auth_required
+def consentimiento_view(request):
+    error = None
+    try:
+        documents = request_api('GET', '/legal/status', token=token(request))
+        pending = [item for item in documents if not item['aceptado']]
+        if request.method == 'POST':
+            for document in pending:
+                request_api('POST', '/legal/events', token=token(request), json={
+                    'tipo': document['tipo'],
+                    'decision': 'ACEPTADO',
+                    'version_documento': document['version'],
+                })
+            return redirect('listado_proyectos')
+    except ApiError as exc:
+        redirect_response = handle_api_error(request, exc)
+        if redirect_response:
+            return redirect_response
+        documents, pending, error = [], [], exc.message
+    return render(request, 'legal/consentimiento.html', {'documents': documents, 'pending': pending, 'error': error})
+
 
 @auth_required
 def logout_view(request):
-    """Limpia la sesión local y (opcionalmente) notifica al backend."""
-    if 'access_token' in request.session:
-        # Opcional: llamar al endpoint de logout del backend si existe para invalidar el token en el servidor.
-        # requests.post(f"{NESTJS_API_URL}/auth/logout", headers=get_auth_headers(request))
-        del request.session['access_token']
+    try:
+        request_api('POST', '/auth/logout', token=token(request))
+    except ApiError:
+        pass
+    request.session.flush()
     return redirect('login')
 
-# ==============================================================================
-# VISTAS DE PROYECTOS Y EVALUACIONES
-# ==============================================================================
 
 @auth_required
 def listado_proyectos(request):
+    error = None
     try:
-        # Ahora la petición incluye el token de autenticación
-        response = requests.get(f"{NESTJS_API_URL}/projects", headers=get_auth_headers(request))
-        proyectos = response.json() if response.status_code == 200 else []
-    except requests.exceptions.RequestException:
-        proyectos = []
-    
-    return render(request, 'projects/listado.html', {'proyectos': proyectos})
+        project_page = request_api('GET', '/projects?page=1&limit=100', token=token(request))
+        projects = project_page.get('data', [])
+        evaluations = request_api('GET', '/evaluations', token=token(request))
+        evaluations_by_project = {item['proyecto']['id_proyecto']: item for item in evaluations}
+        for project in projects:
+            project['evaluacion'] = evaluations_by_project.get(project['id_proyecto'])
+    except ApiError as exc:
+        redirect_response = handle_api_error(request, exc)
+        if redirect_response:
+            return redirect_response
+        projects, error = [], exc.message
+    return render(request, 'projects/listado.html', {'proyectos': projects, 'error_api': error})
+
 
 @auth_required
 def crear_proyecto(request):
-    error_api = None
-    if request.method == 'POST':
-        form = ProyectoForm(request.POST)
-        if form.is_valid():
-            try:
-                response = requests.post(
-                    f"{NESTJS_API_URL}/projects",
-                    json=form.cleaned_data,
-                    headers=get_auth_headers(request)
-                )
-                if response.status_code == 201:
-                    return redirect('listado_proyectos')
-                else:
-                    error_api = response.json().get('message', 'Error al crear el proyecto.')
-            except requests.exceptions.RequestException:
-                error_api = "Error de conexión con el servidor."
-    else:
-        form = ProyectoForm()
-    return render(request, 'projects/crear.html', {'form': form, 'error_api': error_api})
+    error = None
+    form = ProyectoForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        try:
+            request_api('POST', '/projects', token=token(request), json=form.cleaned_data)
+            return redirect('listado_proyectos')
+        except ApiError as exc:
+            redirect_response = handle_api_error(request, exc)
+            if redirect_response:
+                return redirect_response
+            error = exc.message
+    return render(request, 'projects/crear.html', {'form': form, 'error_api': error})
+
+
+def find_evaluation(request, project_id):
+    evaluations = request_api('GET', '/evaluations', token=token(request))
+    return next((item for item in evaluations if item['proyecto']['id_proyecto'] == str(project_id)), None)
+
 
 @auth_required
 def evaluar_trl(request, proyecto_id):
-    error_api = None
-    if request.method == 'POST':
-        form = EvaluacionTRLForm(request.POST)
-        if form.is_valid():
-            payload = form.cleaned_data
-            try:
-                response = requests.post(
-                    f"{NESTJS_API_URL}/evaluations/{proyecto_id}",
-                    json=payload,
-                    headers=get_auth_headers(request) # <- Se añade la autenticación
-                )
-                if response.status_code in [200, 201]:
-                    return redirect('listado_proyectos')
-                else:
-                    error_api = response.json().get('message', 'Error en el servidor.')
-            except requests.exceptions.RequestException:
-                error_api = "Error de conexión con NestJS."
-    else:
-        form = EvaluacionTRLForm()
+    error = None
+    evaluation = None
+    form = EvaluacionTRLForm(request.POST or None)
+    try:
+        evaluation = find_evaluation(request, proyecto_id)
+        if request.method == 'POST' and form.is_valid():
+            if not evaluation:
+                created = request_api('POST', '/evaluations', token=token(request), json={'id_proyecto': str(proyecto_id)})
+                evaluation = {
+                    'id_solicitud': created['id_solicitud'],
+                    'id_cuestionario': created['cuestionario']['id_cuestionario'],
+                }
+            result = request_api(
+                'PUT',
+                f"/evaluations/{evaluation['id_solicitud']}/answers",
+                token=token(request),
+                json={'respuestas': form.respuestas()},
+            )
+            return redirect('tabla_evidencias', proyecto_id=proyecto_id)
+    except ApiError as exc:
+        redirect_response = handle_api_error(request, exc)
+        if redirect_response:
+            return redirect_response
+        error = exc.message
     return render(request, 'evaluations/formulario.html', {
         'form': form,
         'proyecto_id': proyecto_id,
-        'error_api': error_api
+        'evaluacion': evaluation,
+        'error_api': error,
     })
+
 
 @auth_required
 def tabla_evidencias(request, proyecto_id):
-    # Simulando la vista de evidencias
-    return render(request, 'evidence/tabla.html', {'proyecto_id': proyecto_id})
+    error = None
+    evaluation = None
+    documents = []
+    try:
+        evaluation = find_evaluation(request, proyecto_id)
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            if action == 'upload':
+                uploaded = request.FILES.get('file')
+                if not uploaded or not evaluation or not evaluation.get('id_cuestionario'):
+                    raise ApiError(400, 'Primero complete el cuestionario y seleccione un PDF.')
+                request_api(
+                    'POST',
+                    f"/evidence/questionnaires/{evaluation['id_cuestionario']}",
+                    token=token(request),
+                    files={'file': (uploaded.name, uploaded.file, uploaded.content_type)},
+                    timeout=30,
+                )
+            elif action == 'submit' and evaluation:
+                request_api('POST', f"/evaluations/{evaluation['id_solicitud']}/submit", token=token(request))
+            return redirect('tabla_evidencias', proyecto_id=proyecto_id)
+        documents = request_api('GET', f'/evidence/project/{proyecto_id}', token=token(request))
+    except ApiError as exc:
+        redirect_response = handle_api_error(request, exc)
+        if redirect_response:
+            return redirect_response
+        error = exc.message
+    return render(request, 'evidence/tabla.html', {
+        'proyecto_id': proyecto_id,
+        'evaluacion': evaluation,
+        'documentos': documents,
+        'error_api': error,
+    })
+
+
+@auth_required
+def descargar_evidencia(request, documento_id):
+    try:
+        response = download_api(f'/evidence/{documento_id}', token(request))
+        result = HttpResponse(response.content, content_type=response.headers.get('Content-Type', 'application/pdf'))
+        result['Content-Disposition'] = response.headers.get('Content-Disposition', 'attachment; filename="evidencia.pdf"')
+        result['Cache-Control'] = 'no-store'
+        return result
+    except ApiError as exc:
+        return HttpResponse(exc.message, status=exc.status)
+
 
 @auth_required
 def logs_auditoria(request):
-    # Simulando la vista de logs
-    return render(request, 'audit/logs.html')
+    error = None
+    try:
+        events = request_api('GET', '/audit', token=token(request))
+    except ApiError as exc:
+        events, error = [], exc.message
+    return render(request, 'audit/logs.html', {'eventos': events, 'error_api': error})
+
 
 @auth_required
 def create_user_view(request):
-    """
-    Vista para que un administrador cree nuevos usuarios.
-    El backend se encarga de verificar que el usuario tenga el rol 'ADMINISTRADOR'.
-    """
-    error_api = None
-    success_data = None
+    error = None
+    success = None
+    form = CreateUserForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        payload = {key: value for key, value in form.cleaned_data.items() if value not in ('', None)}
+        try:
+            success = request_api('POST', '/usuarios', token=token(request), json=payload)
+            form = CreateUserForm()
+        except ApiError as exc:
+            error = exc.message
+    return render(request, 'admin/create_user.html', {'form': form, 'error_api': error, 'success_data': success})
 
-    if request.method == 'POST':
-        form = CreateUserForm(request.POST)
-        if form.is_valid():
-            try:
-                response = requests.post(
-                    f"{NESTJS_API_URL}/users",  # Endpoint de creación de usuarios en el backend
-                    json=form.cleaned_data,
-                    headers=get_auth_headers(request),
-                    timeout=10
-                )
 
-                if response.status_code == 201:
-                    # ¡Éxito! El backend devuelve los datos del usuario y el secreto MFA.
-                    success_data = response.json()
-                    # Limpiamos el formulario para la siguiente creación.
-                    form = CreateUserForm()
-                else:
-                    # Mostramos el error que devuelve la API (ej: usuario ya existe).
-                    error_api = response.json().get('message', 'Ocurrió un error al crear el usuario.')
-
-            except requests.exceptions.RequestException:
-                error_api = "Error de conexión con el servidor. Verifique que el backend esté funcionando."
-    else:
-        form = CreateUserForm()
-
-    return render(request, 'admin/create_user.html', {
-        'form': form,
-        'error_api': error_api,
-        'success_data': success_data
-    })
+@auth_required
+def configuracion_trl_view(request):
+    error = None
+    success = False
+    form = ConfiguracionTrlForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        try:
+            request_api('POST', '/management/trl-configurations', token=token(request), json={
+                'version': form.cleaned_data['version'],
+                'parametros_universidad': form.cleaned_data['parametros_json'],
+            })
+            success = True
+        except ApiError as exc:
+            error = exc.message
+    return render(request, 'management/configuracion.html', {'form': form, 'error_api': error, 'success': success})

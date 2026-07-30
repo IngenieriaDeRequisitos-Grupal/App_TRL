@@ -1,47 +1,14 @@
 {% extends 'master.html' %}
-
+{% block title %}Cuestionario TRL{% endblock %}
 {% block contenido %}
-<div class="card" style="max-width: 600px; margin: 0 auto;">
-  <h2 style="color: var(--primary); margin-top: 0;">Evaluación Técnica TRL</h2>
-  <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Aplicación de métricas de madurez.</p>
-
-  <form method="POST" action="{% url 'evaluar_trl' proyecto_id %}">
+<section class="card narrow-card">
+  <h1>Cuestionario TRL</h1>
+  <p class="text-muted">Marque únicamente los criterios que pueda demostrar con evidencia.</p>
+  {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
+  <form method="post">
     {% csrf_token %}
-
-    <!-- Alertas accesibles -->
-    {% if error_api %}
-    <div class="alert alert-danger">
-      <span role="alert"><strong>Error Backend:</strong> {{ error_api }}</span>
-    </div>
-    {% endif %}
-
-    {% if form.non_field_errors %}
-    <div class="alert alert-danger">
-      <span role="alert">{{ form.non_field_errors.0 }}</span>
-    </div>
-    {% endif %}
-
-    <!-- Campos del Formulario -->
-    <div class="form-group">
-      <label class="form-label" for="{{ form.nivel_alcanzado.id_for_label }}">{{ form.nivel_alcanzado.label }}</label>
-      {{ form.nivel_alcanzado }}
-      {% if form.nivel_alcanzado.errors %}
-        <span class="form-text-error" role="alert">{{ form.nivel_alcanzado.errors.0 }}</span>
-      {% endif %}
-    </div>
-
-    <div class="form-group">
-      <label class="form-label" for="{{ form.justificacion.id_for_label }}">{{ form.justificacion.label }}</label>
-      {{ form.justificacion }}
-      {% if form.justificacion.errors %}
-        <span class="form-text-error" role="alert">{{ form.justificacion.errors.0 }}</span>
-      {% endif %}
-    </div>
-
-    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-      <button type="submit" class="btn btn-primary">Registrar Nivel</button>
-      <a href="{% url 'listado_proyectos' %}" class="btn btn-secondary">Cancelar</a>
-    </div>
+    {% for field in form %}<label class="checkbox-row">{{ field }} {{ field.label }}</label>{% endfor %}
+    <div class="button-row"><button type="submit" class="btn btn-primary">Guardar respuestas</button><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Cancelar</a></div>
   </form>
-</div>
+</section>
 {% endblock %}

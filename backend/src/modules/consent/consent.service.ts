@@ -26,6 +26,21 @@ export class ConsentService {
     ];
   }
 
+  async status(userId: string) {
+    const documents = this.current();
+    return Promise.all(documents.map(async (document) => ({
+      ...document,
+      aceptado: await this.events.exists({
+        where: {
+          usuario: { id_usuario: userId },
+          tipo: document.tipo,
+          version_documento: document.version,
+          decision: DecisionConsentimiento.ACEPTADO,
+        },
+      }),
+    })));
+  }
+
   async register(userId: string, dto: RegisterLegalDecisionDto, ip: string): Promise<Consentimiento> {
     if (dto.tipo === TipoConsentimiento.FINALIDAD_OPCIONAL) {
       throw new BadRequestException('Use el flujo específico de finalidades opcionales');

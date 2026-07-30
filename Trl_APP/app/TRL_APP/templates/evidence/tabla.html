@@ -1,43 +1,19 @@
 {% extends 'master.html' %}
-
+{% block title %}Evidencias | TRL UTPL{% endblock %}
 {% block contenido %}
-<div style="margin-bottom: 2rem;">
-  <a href="{% url 'listado_proyectos' %}" style="color: var(--primary); text-decoration: none; font-weight: 500;">← Volver al Portafolio</a>
-  <h1 style="margin-top: 1rem; margin-bottom: 0.25rem;">Repositorio de Evidencias</h1>
-  <p style="color: var(--text-muted); margin: 0;">Proyecto: Sistema de Asistencia QR</p>
-</div>
-
-<div class="table-responsive">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>ID Referencia</th>
-        <th>Tipo de Documento</th>
-        <th>Fecha de Carga</th>
-        <th>Estado de Consentimiento</th>
-        <th style="text-align: right;">Acción</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>EVD-2026-001</strong></td>
-        <td>Acta de Laboratorio (PDF)</td>
-        <td>25/07/2026</td>
-        <td><span class="badge badge-success">Validado</span></td>
-        <td style="text-align: right;">
-          <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: 0 1rem;">Ver</button>
-        </td>
-      </tr>
-      <tr>
-        <td><strong>EVD-2026-002</strong></td>
-        <td>Consentimiento Informado</td>
-        <td>28/07/2026</td>
-        <td><span class="badge badge-warning">Pendiente Firma</span></td>
-        <td style="text-align: right;">
-          <button type="button" class="btn btn-secondary" style="min-height: 36px; padding: 0 1rem;">Ver</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+<div class="page-header"><div><h1>Evidencias</h1><p class="text-muted">Documentos PDF cifrados en PostgreSQL.</p></div><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Volver</a></div>
+{% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
+{% if request.session.user.rol == 'INVESTIGADOR' and evaluacion %}
+<section class="card form-section">
+  <form method="post" enctype="multipart/form-data" class="button-row">
+    {% csrf_token %}<input type="hidden" name="action" value="upload"><input type="file" name="file" accept="application/pdf" required><button class="btn btn-primary" type="submit">Subir PDF</button>
+  </form>
+</section>
+{% endif %}
+<div class="table-responsive"><table class="table"><thead><tr><th>Archivo</th><th>Fecha</th><th>Tamaño</th><th>Acción</th></tr></thead><tbody>
+{% for documento in documentos %}<tr><td>{{ documento.nombre_archivo }}</td><td>{{ documento.fecha_carga }}</td><td>{{ documento.tamano_bytes }} bytes</td><td><a class="btn btn-secondary" href="{% url 'descargar_evidencia' documento.id_documento %}">Descargar</a></td></tr>{% empty %}<tr><td colspan="4">No existen evidencias.</td></tr>{% endfor %}
+</tbody></table></div>
+{% if request.session.user.rol == 'INVESTIGADOR' and evaluacion and documentos %}
+<form method="post" class="form-section">{% csrf_token %}<input type="hidden" name="action" value="submit"><button class="btn btn-warning" type="submit">Enviar solicitud a evaluación</button></form>
+{% endif %}
 {% endblock %}

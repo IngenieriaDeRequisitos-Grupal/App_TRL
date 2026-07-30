@@ -10,6 +10,12 @@ import { EvidenceService } from './evidence.service';
 export class EvidenceController {
   constructor(private readonly evidence: EvidenceService) {}
 
+  @Get('project/:id')
+  @Roles(NombreRol.INVESTIGADOR, NombreRol.EVALUADOR, NombreRol.GESTOR_IDI)
+  listByProject(@CurrentUser() user: RequestPrincipal, @Param('id', ParseUUIDPipe) id: string) {
+    return this.evidence.listByProject(user, id);
+  }
+
   @Post('questionnaires/:id')
   @Roles(NombreRol.INVESTIGADOR)
   @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { files: 1 } }))

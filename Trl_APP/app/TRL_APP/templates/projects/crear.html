@@ -1,26 +1,13 @@
-{# Asume que tienes un base.html con un bloque de contenido #}
-{% extends "base.html" %}
-
-{% block content %}
-<div class="container">
-    <h1>Registrar Nuevo Proyecto de Invención</h1>
-    <p>Complete los datos para registrar una nueva tecnología o invención en el sistema.</p>
-
-    <div class="card">
-        <form method="post">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                {{ form.titulo_tecnologia.label_tag }}
-                {{ form.titulo_tecnologia }}
-            </div>
-            <div class="form-group">
-                {{ form.rama_innovacion.label_tag }}
-                {{ form.rama_innovacion }}
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Registrar Proyecto</button>
-        </form>
-    </div>
-</div>
+{% extends 'master.html' %}
+{% block title %}Registrar proyecto | TRL UTPL{% endblock %}
+{% block contenido %}
+<section class="card narrow-card">
+  <h1>Registrar proyecto</h1>
+  {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% for field in form %}<div class="form-group">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}
+    <div class="button-row"><button class="btn btn-primary" type="submit">Guardar</button><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Cancelar</a></div>
+  </form>
+</section>
 {% endblock %}
