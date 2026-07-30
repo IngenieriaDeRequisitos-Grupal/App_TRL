@@ -250,11 +250,14 @@ def create_user_view(request):
     if request.method == 'POST' and form.is_valid():
         payload = {key: value for key, value in form.cleaned_data.items() if value not in ('', None)}
         try:
-            success = request_api('POST', '/usuarios', token=token(request), json=payload)
+            success = request_api('POST', '/users', token=token(request), json=payload)
             form = CreateUserForm()
         except ApiError as exc:
+            redirect_response = handle_api_error(request, exc)
+            if redirect_response:
+                return redirect_response
             error = exc.message
-    return render(request, 'admin/create_user.html', {'form': form, 'error_api': error, 'success_data': success})
+    return render(request, 'create_user.html', {'form': form, 'error_api': error, 'success_data': success})
 
 
 @auth_required

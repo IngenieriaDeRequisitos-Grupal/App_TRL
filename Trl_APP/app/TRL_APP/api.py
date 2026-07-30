@@ -32,7 +32,8 @@ def request_api(
             timeout=timeout,
         )
     except requests.RequestException as exc:
-        raise ApiError(503, 'No se pudo conectar con el backend TRL.') from exc
+        # Proporciona un mensaje más detallado para facilitar el diagnóstico.
+        raise ApiError(503, f'No se pudo conectar con el backend TRL: {exc}') from exc
 
     content_type = response.headers.get('content-type', '')
     payload = response.json() if 'application/json' in content_type and response.content else None
@@ -53,7 +54,7 @@ def download_api(path: str, token: str) -> requests.Response:
             timeout=30,
         )
     except requests.RequestException as exc:
-        raise ApiError(503, 'No se pudo descargar el archivo.') from exc
+        raise ApiError(503, f'No se pudo descargar el archivo desde el backend: {exc}') from exc
     if not response.ok:
         raise ApiError(response.status_code, 'No fue posible descargar la evidencia.')
     return response

@@ -2,8 +2,11 @@
 {% block title %}Aceptación legal | TRL UTPL{% endblock %}
 {% block contenido %}
 <section class="card narrow-card">
-  <h1>Términos y privacidad</h1>
-  <p>Revise los documentos vigentes antes de utilizar la plataforma.</p>
+  <div class="page-title">
+    <span class="role-chip">Consentimiento</span>
+    <h1>Términos y privacidad</h1>
+    <p class="page-subtitle">Revise los documentos vigentes antes de utilizar la plataforma.</p>
+  </div>
   {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
   {% for document in documents %}
     <article class="legal-document">

@@ -1,7 +1,7 @@
 {% extends 'master.html' %}
 {% block title %}Evidencias | TRL UTPL{% endblock %}
 {% block contenido %}
-<div class="page-header"><div><h1>Evidencias</h1><p class="text-muted">Documentos PDF cifrados en PostgreSQL.</p></div><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Volver</a></div>
+<div class="page-header"><div class="page-title"><span class="role-chip">Investigador</span><h1>Evidencias</h1><p class="page-subtitle">Documentos PDF cifrados en PostgreSQL y organizados por proyecto.</p></div><a class="btn btn-secondary" href="{% url 'listado_proyectos' %}">Volver</a></div>
 {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
 {% if request.session.user.rol == 'INVESTIGADOR' and evaluacion %}
 <section class="card form-section">

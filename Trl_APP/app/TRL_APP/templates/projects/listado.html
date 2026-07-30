@@ -2,8 +2,12 @@
 {% block title %}Proyectos | TRL UTPL{% endblock %}
 {% block contenido %}
 <div class="page-header">
-  <div><h1>Portafolio de invenciones</h1><p class="text-muted">Proyectos disponibles según su rol.</p></div>
-  {% if request.session.user.rol == 'INVESTIGADOR' %}<a href="{% url 'crear_proyecto' %}" class="btn btn-primary">+ Registrar proyecto</a>{% endif %}
+  <div class="page-title">
+    <span class="role-chip">{% if request.session.user.rol == 'INVESTIGADOR' or request.session.user.role == 'INVESTIGADOR' %}Investigador{% elif request.session.user.rol == 'GESTOR_IDI' or request.session.user.role == 'GESTOR_IDI' %}Gestor IDI{% elif request.session.user.rol == 'ADMINISTRADOR' or request.session.user.role == 'ADMINISTRADOR' %}Administrador{% else %}Usuario{% endif %}</span>
+    <h1>Portafolio de invenciones</h1>
+    <p class="page-subtitle">Visualice, evalúe y gestione los proyectos disponibles según el acceso de su rol.</p>
+  </div>
+  {% if request.session.user.rol == 'INVESTIGADOR' or request.session.user.role == 'INVESTIGADOR' %}<a href="{% url 'crear_proyecto' %}" class="btn btn-primary">+ Registrar proyecto</a>{% endif %}
 </div>
 {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
 <section class="grid-cards">
@@ -19,7 +23,7 @@
       </div>
     </article>
   {% empty %}
-    <article class="card"><p>No existen proyectos para mostrar.</p></article>
+    <article class="card empty-state"><p>No existen proyectos para mostrar en este momento.</p></article>
   {% endfor %}
 </section>
 {% endblock %}

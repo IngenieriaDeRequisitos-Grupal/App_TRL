@@ -2,7 +2,11 @@
 {% block title %}Registrar proyecto | TRL UTPL{% endblock %}
 {% block contenido %}
 <section class="card narrow-card">
-  <h1>Registrar proyecto</h1>
+  <div class="page-title">
+    <span class="role-chip">Registro</span>
+    <h1>Registrar proyecto</h1>
+    <p class="page-subtitle">Complete la información principal para iniciar la evaluación del proyecto.</p>
+  </div>
   {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
   <form method="post" novalidate>
     {% csrf_token %}

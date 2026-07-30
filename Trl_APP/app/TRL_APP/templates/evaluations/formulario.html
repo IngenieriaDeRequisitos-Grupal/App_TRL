@@ -2,8 +2,11 @@
 {% block title %}Cuestionario TRL{% endblock %}
 {% block contenido %}
 <section class="card narrow-card">
-  <h1>Cuestionario TRL</h1>
-  <p class="text-muted">Marque únicamente los criterios que pueda demostrar con evidencia.</p>
+  <div class="page-title">
+    <span class="role-chip">Evaluación</span>
+    <h1>Cuestionario TRL</h1>
+    <p class="page-subtitle">Marque únicamente los criterios que pueda demostrar con evidencia.</p>
+  </div>
   {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
   <form method="post">
     {% csrf_token %}

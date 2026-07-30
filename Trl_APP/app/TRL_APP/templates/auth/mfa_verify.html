@@ -10,12 +10,21 @@
 <body>
   <main class="login-wrapper">
     <section class="card login-card">
-      <h1>Verificación MFA</h1>
-      <p class="text-muted">Ingrese el código temporal de seis dígitos.</p>
+      <div class="brand">
+        <div class="brand-badge">MFA</div>
+        <div>
+          <p class="eyebrow">Autenticación</p>
+          <h1>Verificación MFA</h1>
+        </div>
+      </div>
+      <p class="text-muted">Ingrese el código temporal de seis dígitos para confirmar tu identidad.</p>
       {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
       <form method="post" novalidate>
         {% csrf_token %}
-        <div class="form-group">{{ form.codigo.label_tag }}{{ form.codigo }}{{ form.codigo.errors }}</div>
+        <div class="form-group mb-3">
+          {{ form.codigo.label_tag }}
+          {{ form.codigo }}
+        </div>
         <button type="submit" class="btn btn-primary full-width">Verificar</button>
       </form>
     </section>

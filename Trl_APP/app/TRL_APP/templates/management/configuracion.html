@@ -2,8 +2,11 @@
 {% block title %}Configuración TRL{% endblock %}
 {% block contenido %}
 <section class="card narrow-card">
-  <h1>Configuración institucional TRL</h1>
-  <p class="text-muted">Active una matriz antes de que los investigadores creen solicitudes.</p>
+  <div class="page-title">
+    <span class="role-chip">Gestor IDI</span>
+    <h1>Configuración institucional TRL</h1>
+    <p class="page-subtitle">Active una matriz antes de que los investigadores creen solicitudes.</p>
+  </div>
   {% if error_api %}<div class="alert alert-danger">{{ error_api }}</div>{% endif %}
   {% if success %}<div class="alert alert-success">Configuración activada correctamente.</div>{% endif %}
   <form method="post">{% csrf_token %}{% for field in form %}<div class="form-group">{{ field.label_tag }}{{ field }}{{ field.errors }}</div>{% endfor %}<button class="btn btn-primary" type="submit">Activar configuración</button></form>

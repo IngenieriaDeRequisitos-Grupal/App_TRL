@@ -10,13 +10,25 @@
 <body>
   <main class="login-wrapper">
     <section class="card login-card">
-      <h1>TRL UTPL</h1>
-      <p class="text-muted">Evaluación de madurez tecnológica</p>
+      <div class="brand">
+        <div class="brand-badge">TRL</div>
+        <div>
+          <p class="eyebrow">Acceso seguro</p>
+          <h1>TRL UTPL</h1>
+        </div>
+      </div>
+      <p class="text-muted">Evaluación de madurez tecnológica y seguimiento institucional.</p>
       {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
       <form method="post" novalidate>
         {% csrf_token %}
-        <div class="form-group">{{ form.correo_electronico.label_tag }}{{ form.correo_electronico }}{{ form.correo_electronico.errors }}</div>
-        <div class="form-group">{{ form.contrasena.label_tag }}{{ form.contrasena }}{{ form.contrasena.errors }}</div>
+        <div class="form-group mb-3">
+          {{ form.correo_electronico.label_tag }}
+          {{ form.correo_electronico }}
+        </div>
+        <div class="form-group mb-3">
+          {{ form.contrasena.label_tag }}
+          {{ form.contrasena }}
+        </div>
         <button type="submit" class="btn btn-primary full-width">Continuar con MFA</button>
       </form>
     </section>

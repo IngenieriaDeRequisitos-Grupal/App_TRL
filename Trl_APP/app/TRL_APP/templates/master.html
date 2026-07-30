@@ -10,17 +10,23 @@
 <body>
   <header class="navbar">
     <div class="navbar-container">
-      <a href="{% url 'listado_proyectos' %}" class="navbar-brand">TRL Assessment</a>
+      <div class="navbar-brand-group">
+        <a href="{% url 'listado_proyectos' %}" class="navbar-brand">TRL Assessment</a>
+        <span class="role-chip">{% if request.session.user.role == 'ADMINISTRADOR' or request.session.user.rol == 'ADMINISTRADOR' %}Administrador{% elif request.session.user.role == 'GESTOR_IDI' or request.session.user.rol == 'GESTOR_IDI' %}Gestor IDI{% elif request.session.user.role == 'INVESTIGADOR' or request.session.user.rol == 'INVESTIGADOR' %}Investigador{% else %}Usuario{% endif %}</span>
+      </div>
       <nav class="navbar-nav">
         <a href="{% url 'listado_proyectos' %}" class="nav-link">Proyectos</a>
-        {% if request.session.user.rol == 'ADMINISTRADOR' %}
+        {% if request.session.user.role == 'ADMINISTRADOR' or request.session.user.rol == 'ADMINISTRADOR' %}
           <a href="{% url 'create_user' %}" class="nav-link">Crear usuario</a>
           <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
-        {% elif request.session.user.rol == 'GESTOR_IDI' %}
+        {% elif request.session.user.role == 'GESTOR_IDI' or request.session.user.rol == 'GESTOR_IDI' %}
           <a href="{% url 'configuracion_trl' %}" class="nav-link">Configuración TRL</a>
           <a href="{% url 'logs_auditoria' %}" class="nav-link">Auditoría</a>
         {% endif %}
-        <span class="nav-user">{{ request.session.user.correo_electronico }} · {{ request.session.user.rol }}</span>
+        <div class="nav-user">
+          <span class="nav-user-name">{{ request.session.user.email|default:'Usuario' }}</span>
+          <span class="nav-user-role">{{ request.session.user.role|default:request.session.user.rol|default:'Usuario' }}</span>
+        </div>
         <a href="{% url 'logout' %}" class="btn btn-warning">Salir</a>
       </nav>
     </div>
